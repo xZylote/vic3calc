@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <link rel="stylesheet" href="style.css">
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    What do you want to produce?
-    <br> <br>
-    <select onchange="bar(this.options[this.selectedIndex].value)" id="good">
-        <option selected>Select Good</option>
-    </select>
-    <br> <br>
-    <div id="info"></div>
-    <script src="goods.js"></script>
-    <script src="production_methods.js"></script>
-    <script src="script.js"></script>
-</body>
+
+    <head>
+        <link rel="stylesheet" href="style.css">
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Victoria 3 Calculator</title>
+    </head>
+
+    <body>
+        <div id="mask">
+            <button onclick="joinTables()">Start</button>
+        </div>
+        <br>
+        <select onclick="createDropdown()" onchange="bar(this.options[this.selectedIndex].value)" id="good">
+            <option selected>Select Building</option>
+        </select>
+        <br><br>
+        <div id="info"></div>
+
+        <script src="https://cdn.jsdelivr.net/npm/jomini@0.6.4/dist/umd/index.min.js"></script>
+        <script src="files.js"></script>
+        <script src="script.js"></script>
+    </body>
+
 </html>

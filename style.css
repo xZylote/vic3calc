@@ -1,17 +1,19 @@
-* {
+body {
     font-family: Helvetica, sans-serif;
-}
-table {
-    font-family: arial, sans-serif;
-    border-collapse: collapse;
-    width: 100%;
+    font-size: 1em;
+    margin: 0;
+    text-align: center;
 }
 
-td,
+table {
+    border-collapse: collapse;
+    width: 100%;
+    text-align: left !important;
+}
+
 th {
-    border: 1px solid black;
-    text-align: left;
     padding: 8px;
+    background-color: lightblue;
 }
 
 tr:nth-child(even) {
@@ -21,4 +23,48 @@ tr:nth-child(even) {
 select {
     width: 200px;
     height: 50px;
+}
+
+#mask {
+    background-color: black;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+}
+
+#mask button {
+    margin-top: 40vh;
+    height: 20vh;
+    width: 80vw;
+    border-radius: 1vw;
+    font-size: 5vw;
+    z-index: 999;
+}
+
+img {
+    width: 100px;
+    height: 100px;
+    border-radius: 10px;
+}
+label img {
+    width: 50px;
+    height: 50px;
+    border-radius: 5px;
+}
+
+[type=radio] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+
+[type=radio] + img {
+    cursor: pointer;
+}
+
+
+[type=radio]:checked + img {
+    outline: groove 3px red;
 }
