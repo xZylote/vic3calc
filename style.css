@@ -6,6 +6,7 @@ body {
 }
 
 table {
+    border: 1px solid grey;
     border-collapse: collapse;
     width: 100%;
     text-align: left !important;
@@ -46,6 +47,7 @@ img {
     height: 100px;
     border-radius: 10px;
 }
+
 label img {
     width: 50px;
     height: 50px;
@@ -67,4 +69,9 @@ label img {
 
 [type=radio]:checked + img {
     outline: groove 3px red;
+}
+
+[type=number]{
+    width: 40px;
+    height: 40px;
 }
