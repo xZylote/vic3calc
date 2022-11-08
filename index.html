@@ -3,6 +3,7 @@
 
     <head>
         <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css">
         <meta charset="UTF-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,12 +12,12 @@
 
     <body>
         <div id="mask">
-            <button onclick="joinTables()">Start</button>
+            <button onclick="joinTables()" style="text-align: center;" class="btn btn-primary">Start</button>
         </div>
         <br>
-        <select onclick="createDropdown()" onchange="bar(this.options[this.selectedIndex].value)" id="good">
-            <option selected>Select Building</option>
-        </select>
+        <div id="header">
+        </div>
+        <button onclick="addFactory()" style="margin: 8px" class="btn btn-primary">Add Building</button>    
         <br><br>
         <div id="info"></div>
         <script src="https://cdn.jsdelivr.net/npm/jomini@0.6.4/dist/umd/index.min.js"></script>
