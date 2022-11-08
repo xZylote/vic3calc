@@ -1,14 +1,15 @@
+// https://github.com/xZylote/vic3calc/
+
+//---Common Functions---//
 $ = function (x) {
     let y = document.querySelectorAll(x)
     if (y.length === 0) return null
     if (y.length === 1) return y[0]
     return y
 }
-
 _ = (x) => document.createElement(x)
 
-//------------------------------------//
-
+//---Read Data from Game Files---//
 let data = { buildings: {}, goods: {}, production_methods: {}, production_method_groups: {} }
 
 for (let type in files) {
@@ -37,26 +38,8 @@ function readFile(path) {
     return data
 }
 
-function bar() {
-    let selection = []
-    let index = 0
-    for (let div of document.querySelectorAll('.input-group')) {
-        let a = div.querySelector('select')
-        if (a.value !== 'null') {
-            selection.push({ name: a.value, amount: div.querySelector('input').value, index: index })
-        }
-        index++
-    }
-
-    $('#info').innerHTML = ''
-
-    for (let factory of selection) {
-        createTable(factory)
-    }
-}
-
-function joinTables() {
-    $('#mask').remove()
+//---Integrate all Paradox-format Data into JSON---//
+window.onload = function () {
     for (let production_method_group in data.production_method_groups) {
         for (let production_method1 of data.production_method_groups[production_method_group].production_methods) {
             for (let production_method2 in data.production_methods) {
@@ -81,6 +64,30 @@ function joinTables() {
     }
 }
 
+
+/**
+ * For every building that is selected in the dropdowns, create a table showing inputs and outputs
+ */
+let index = 0
+function changeSelection() {
+    let selection = []
+    for (let div of document.querySelectorAll('.input-group')) {
+        let a = div.querySelector('select')
+        if (a.value !== 'null') {
+            selection.push({ name: a.value, amount: div.querySelector('input').value, index: index })
+        }
+        index++
+    }
+
+    $('#info').innerHTML = ''
+
+    for (let building of selection) {
+        createTable(building)
+    }
+}
+/**
+ * @param {*} selection Object that includes name, amount and index of a building for which a table is to be generated
+ */
 function createTable(selection) {
     let table_container = _('div')
     let table = _('table')
@@ -94,7 +101,7 @@ function createTable(selection) {
         th_technologies = _('th'),
         th_production_method_groups = _('th')
     let td_name = _('td'),
-        td_multiplier = _('th'),
+        td_multiplier = _('td'),
         td_technologies = _('td'),
         td_production_method_groups = _('td')
     let building_thumbnail = _('img')
@@ -108,6 +115,7 @@ function createTable(selection) {
             let radio_wrapper = _('label')
             let production_method_radio = _('input')
             let production_method_thumbnail = _('img')
+
             production_method_radio.onclick = () => calculateSum(selection, table_container)
             production_method_radio.checked = true // Dirty, but will select all the last ones efficiently
             production_method_radio.type = 'radio'
@@ -125,17 +133,17 @@ function createTable(selection) {
         table_production_method_groups.append(th_production_method_group, tr_production_method_groups)
     }
 
+    th_multiplier.innerText = '#'
     th_name.innerText = 'Building'
     th_technologies.innerText = 'Required Technologies'
-    th_multiplier.innerText = '#'
     th_production_method_groups.innerText = 'Production Methods'
     building_thumbnail.title = selection.name
     building_thumbnail.src = data.buildings[selection.name].texture.replace('dds', 'jpg')
     mult_input.innerText = selection.amount
-    td_technologies.innerText = data.buildings[selection.name].unlocking_technologies
+    td_technologies.innerText = data.buildings[selection.name].unlocking_technologies ? data.buildings[selection.name].unlocking_technologies : 'none'
 
     td_multiplier.append(mult_input)
-    td_name.append(building_thumbnail)
+    td_name.append(document.createTextNode(selection.name.split('_').slice(1).join(' ')), building_thumbnail)
     td_production_method_groups.append(table_production_method_groups)
     tr_header.append(th_multiplier, th_name, th_technologies, th_production_method_groups)
     tr_selected.append(td_multiplier, td_name, td_technologies, td_production_method_groups)
@@ -147,6 +155,11 @@ function createTable(selection) {
     calculateSum(selection, table_container)
 }
 
+/**
+ * The radio-button indexing is kind of hacked together but works so far
+ * @param {*} selection Object that includes name, amount and index of a building for which the sum of input and output goods is to be calculated
+ * @param {*} table_container DOM-Element into which the total sum is to be inserted
+ */
 function calculateSum(selection, table_container) {
 
     let i = 0
@@ -179,87 +192,118 @@ function calculateSum(selection, table_container) {
             }
             if (['input', 'output', 'employment'].includes(temp[1])) {
                 if (balanceobj[temp[1]][temp[2]]) {
-                    balanceobj[temp[1]][temp[2]] += element[subelement]
+                    balanceobj[temp[1]][temp[2]] += element[subelement] * selection.amount
                 } else {
-                    balanceobj[temp[1]][temp[2]] = element[subelement]
+                    balanceobj[temp[1]][temp[2]] = element[subelement] * selection.amount
                 }
             }
 
         }
     }
     createSumTable(balanceobj, selection, table_container)
+    addDependents(balanceobj)
 }
 
+/**
+ * 
+ * @param {*} balance Object of form {input: [wood: 23, steel: 12], output: [fabric: 2]}
+ * @param {*} selection Object that includes name, amount and index of the building that the data is for
+ * @param {*} table_container DOM-Element into which the total sum is to be inserted
+ */
 function createSumTable(balance, selection, table_container) {
-    console.log(balance)
     let exists = $('#table_' + selection.index).parentElement.querySelector('.sum_table')
-    if (exists) {
-        exists.remove()
-    }
+    if (exists) exists.remove()
     let sum = _('table')
-    sum.classList.add('sum_table')
     let resources_header = _('tr')
     let resources = _('tr')
     let th_output = _('th'),
         th_input = _('th'),
-        th_employment = _('th')
+        th_employment = _('th'),
+        th_value = _('th')
     let td_output = _('td'),
         td_input = _('td'),
-        td_employment = _('td')
+        td_employment = _('td'),
+        td_value = _('td')
+    let tr1 = _('tr'),
+        tr2 = _('tr'),
+        tr3 = _('tr')
 
+    sum.classList.add('sum_table')
     th_output.innerText = 'Output'
     th_input.innerText = 'Input'
     th_employment.innerText = 'Employment'
+    th_value.innerText = 'Value'
 
+    let profit = 0, employees = 0
     for (let item in balance.output) {
+        profit += data.goods[item].cost * balance.output[item]
         let tr = _('tr')
-        tr.innerText += item + ': ' + balance.output[item] * selection.amount
+        tr.innerText += item + ': ' + balance.output[item]
         td_output.append(tr)
     }
     for (let item in balance.input) {
+        profit -= data.goods[item].cost * balance.input[item]
         let tr = _('tr')
-        tr.innerText += item + ': ' + balance.input[item] * selection.amount
+        tr.innerText += item + ': ' + balance.input[item]
         td_output.append(tr)
         td_input.append(tr)
     }
     for (let item in balance.employment) {
+        employees += balance.employment[item]
         let tr = _('tr')
-        tr.innerText += item + ': ' + balance.employment[item] * selection.amount
+        tr.innerText += item + ': ' + balance.employment[item]
         td_output.append(tr)
         td_employment.append(tr)
     }
 
-    resources_header.append(th_output, th_input, th_employment)
-    resources.append(td_output, td_input, td_employment)
+    tr1.innerText = 'profit: ' + profit + ' £'
+    tr2.innerText = 'employees: ' + employees
+    tr3.innerText = 'profit per employee: ' + (profit / employees).toFixed(3) + ' £'
+
+    td_value.append(tr1, tr2, tr3)
+    resources_header.append(th_output, th_input, th_employment, th_value)
+    resources.append(td_output, td_input, td_employment, td_value)
     sum.append(resources_header, resources)
+    // We could only show the input and output on demand
     //let details = _('details')
     //details.append(sum)
     //table_container.append(details)
     table_container.append(sum)
 }
 
-function addFactory() {
-    let container = $('#header'),
+/**
+ * When clicking on the 'Add Building'-button, we create a new dropdown menu
+ */
+function addBuilding() {
+    let container = $('header'),
         div = _('div'),
         select = _('select'),
         input = _('input'),
-        option = _('option'),
+        default_option = _('option'),
         xbutton = _('button')
 
     select.classList.add('form-select')
     input.type = 'number'
     input.value = 1
     input.classList.add('form-control')
-    option.setAttribute('value', null)
-    option.innerHTML = '- Select Building -'
-    select.onchange = () => bar()
-    input.onchange = () => bar()
+    default_option.setAttribute('value', null)
+    default_option.innerHTML = '- Select Building -'
+
+    select.onchange = () => changeSelection()
+    input.onchange = () => changeSelection()
     xbutton.classList.add('btn', 'btn-danger')
     div.classList.add('input-group')
     xbutton.onclick = function () {
         this.parentElement.remove()
-        bar()
+        changeSelection()
     }
+
+    select.append(default_option)
+    xbutton.append(document.createTextNode('Remove'))
+    div.append(input)
+    div.append(select)
+    div.append(xbutton)
+    container.append(div)
 
     for (let entry in data.buildings) {
         if (!(data.buildings[entry].buildable == false) && !(data.buildings[entry].expandable == false)) {
@@ -269,15 +313,90 @@ function addFactory() {
             select.append(option)
         }
     }
-
-    xbutton.append(document.createTextNode('Remove'))
-    div.append(input)
-    select.append(option)
-    div.append(select)
-    div.append(xbutton)
-    container.append(div)
 }
 
-//value-lookup
-//save preferred production methods
-//default era production methods
+/**
+ * This is the beginning of the function that is supposed to calculate what buildings need to be added in order to form a supply chain
+ * @TODO Only works for one building (the most recently changed one)
+ * @TODO
+ * CURRENT:
+ *
+ * Take pm that produces most of wanted good
+ * There will be duplicate buildings in max object because one building supports multiple pms
+ * Remove duplicates by using first match and combining outputs of all pmgs
+ * Calculate how many are necessary
+ *
+ *
+ * OPTIMAL:
+ *
+ * Take best possible pm per pmg (maybe tech has not been unlocked)
+ * Maybe save preferred production methods (will also fix that on adding/removing buildings, pms are reset)
+ * Maybe set default production methods per era (data in /technologies/)
+ *
+ * Sum up output of all pmgs AND THEN again recalculate which one is the best, then use this metric to remove duplicates/make a good choice (e.g. do not use rye farms for sugar)
+ *
+ * Output excess goods as well
+ *
+ * Iterate n times by adding newly required buildings to the list, until almost only basic goods are left,
+ * this works only if rye farms are not used for sugar since great inefficiency in circular processes lead to infinite byproducts and ever larger input requirements
+ * 
+ * @param {*} balance Object that stores input and output goods of the processes
+ */
+function addDependents(balance) {
+    $('#total').innerHTML = ''
+    let good_buildings = [] // Will include all production method groups that share an output with the demanded input good, always uses the production method that generates most of this good
+    let unique_good_buildings = [] // Same, but will not include duplicates by summing over production method groups or in case multiple buildings are candidates, chooses one depending on preferences
+    for (let building in data.buildings) {
+        for (let production_method_group of data.buildings[building].production_method_groups) {
+            if (production_method_group !== 'pmg_dummy') {
+                for (let production_method of production_method_group.production_methods) {
+                    if (production_method.building_modifiers && production_method.building_modifiers.workforce_scaled) {
+                        let max = { building: '', pmg: '', pm: '', amount: 0 }
+                        for (let output in production_method.building_modifiers.workforce_scaled) {
+                            let temp = output.split('_')
+                            if (temp.length === 5) {
+                                temp[2] = temp[2] + '_' + temp[3]
+                            }
+                            if (temp[1] === 'output' && balance.input[temp[2]]) {
+                                if (default_pms.includes(production_method.name)) {
+                                    if (max.amount <= production_method.building_modifiers.workforce_scaled[output]) {
+                                        max.amount = production_method.building_modifiers.workforce_scaled[output]
+                                        max.building = building
+                                        max.pmg = production_method_group.name
+                                        max.pm = production_method.name
+                                        max.good = output
+                                    }
+                                }
+                            }
+                        }
+                        if (max.amount !== 0) good_buildings.push(max)
+                    }
+                }
+            }
+        }
+    }
+
+    let checkedGoods = [] // Goods whose supply has already been established by adding an appropriate building
+    for (let building1 of good_buildings) {
+        for (let building2 of good_buildings) {
+            if (building1.good === building2.good && !checkedGoods.includes(building1.good) && (!conflicts.includes(building2.good) || building1.building === preferences.get(building2.good))) {
+                if (building1.building === building2.building && building1.pmg !== building2.pmg) {
+                    unique_good_buildings.push({ building: building1.building, good: building1.good, output: building1.amount + building2.amount })
+                } else {
+                    unique_good_buildings.push({ building: building1.building, good: building1.good, output: building1.amount })
+                }
+                checkedGoods.push(building1.good)
+            }
+        }
+    }
+
+    // Output
+    $('#total').append(document.createTextNode('You will need:'), _('hr'), _('br'))
+    for (let requested_good in balance.input) {
+        for (let building of unique_good_buildings) {
+            if (building.good.includes(requested_good)) {
+                $('#total').append(document.createTextNode((building.good.split('_').length === 5 ? (building.good.split('_')[2] + '_' + building.good.split('_')[3]) : building.good.split('_')[2]) + ' ' + building.output * (balance.input[requested_good] / building.output) + '    ---> ' + (balance.input[requested_good] / building.output).toFixed(2) + 'x ' + building.building), _('hr'), _('br'))
+            }
+        }
+    }
+}

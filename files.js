@@ -12,12 +12,12 @@ const files = {
         "10_canals.txt",
         "11_private_infrastructure.txt",
         "12_subsistence.txt",
-        "13_construction.txt"],
+        "13_construction.txt"
+    ],
     goods: [
         "00_goods.txt"
     ],
-    production_methods:
-    [
+    production_methods: [
         "01_industry.txt",
         "02_agro.txt",
         "03_mines.txt",
@@ -30,7 +30,8 @@ const files = {
         "10_canals.txt",
         "11_private_infrastructure.txt",
         "12_subsistence.txt",
-        "13_construction.txt"],
+        "13_construction.txt"
+    ],
     production_method_groups: [
         "01_industry.txt",
         "02_agro.txt",
@@ -44,5 +45,6 @@ const files = {
         "10_canals.txt",
         "11_private_infrastructure.txt",
         "12_subsistence.txt",
-        "13_construction.txt"],
+        "13_construction.txt"
+    ],
 }

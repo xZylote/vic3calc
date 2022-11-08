@@ -11,16 +11,15 @@
     </head>
 
     <body>
-        <div id="mask">
-            <button onclick="joinTables()" style="text-align: center;" class="btn btn-primary">Start</button>
-        </div>
         <br>
-        <div id="header">
-        </div>
-        <button onclick="addFactory()" style="margin: 8px" class="btn btn-primary">Add Building</button>    
+        <header></header>
+        <button onclick="addBuilding()" class="btn btn-primary add">Add Building</button>
         <br><br>
         <div id="info"></div>
+        <div id="total"></div>
+        <!-- https://github.com/nickbabcock/jomini -->
         <script src="https://cdn.jsdelivr.net/npm/jomini@0.6.4/dist/umd/index.min.js"></script>
+        <script src="choices.js"></script>
         <script src="files.js"></script>
         <script src="script.js"></script>
     </body>
