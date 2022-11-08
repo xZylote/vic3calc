@@ -17,11 +17,25 @@
         <br><br>
         <div id="info"></div>
         <div id="total"></div>
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-app.js";
+            import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.13.0/firebase-analytics.js";
+            const firebaseConfig = {
+              apiKey: "AIzaSyAoWkEQFo8B-5hXZAFHjs4tV5roYAoaVHc",
+              authDomain: "vic3calc.firebaseapp.com",
+              projectId: "vic3calc",
+              storageBucket: "vic3calc.appspot.com",
+              messagingSenderId: "803804122115",
+              appId: "1:803804122115:web:5fe7c6596aec9a25731236",
+              measurementId: "G-YZ416LBZ9D"
+            };
+            const app = initializeApp(firebaseConfig);
+            const analytics = getAnalytics(app);
+          </script>
         <!-- https://github.com/nickbabcock/jomini -->
         <script src="https://cdn.jsdelivr.net/npm/jomini@0.6.4/dist/umd/index.min.js"></script>
         <script src="choices.js"></script>
         <script src="files.js"></script>
         <script src="script.js"></script>
     </body>
-
 </html>
