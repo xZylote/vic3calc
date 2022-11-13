@@ -376,6 +376,7 @@ function addBuilding() {
             select.append(option)
         }
     }
+    $('#initial').style.display = 'none'
 }
 
 /**
