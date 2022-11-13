@@ -58,7 +58,6 @@ const default_pms = [
     'pm_vineyards_building_maize_farm',
     'pm_compression_ignition_tractors',
     'pm_chemical_fertilizer',
-    'pm_fig_orchards',
     'pm_compression_ignition_tractors',
     'pm_intensive_grazing_ranch',
     'pm_mechanized_slaughtering',

@@ -11,6 +11,7 @@ _ = (x) => document.createElement(x)
 
 //---Read Data from Game Files---//
 let data = { buildings: {}, goods: {}, production_methods: {}, production_method_groups: {} }
+let precision = 10
 
 for (let type in files) {
     for (let path of files[type]) {
@@ -80,7 +81,7 @@ function changeSelection() {
     }
 
     $('#info').innerHTML = ''
-
+    $('#total').innerHTML = ''
     for (let building of selection) {
         createTable(building)
     }
@@ -176,7 +177,6 @@ function calculateSum(selection, table_container) {
 
     for (let e of $('#table_' + selection.index).querySelectorAll('input[type="radio"]:checked')) {
         if (data.buildings[selection.name].production_method_groups[i].production_methods[indices[i]].building_modifiers) {
-            balance.push(data.buildings[selection.name].production_method_groups[i].production_methods[indices[i]].building_modifiers.unscaled)
             balance.push(data.buildings[selection.name].production_method_groups[i].production_methods[indices[i]].building_modifiers.workforce_scaled)
             balance.push(data.buildings[selection.name].production_method_groups[i].production_methods[indices[i]].building_modifiers.level_scaled)
         }
@@ -191,17 +191,80 @@ function calculateSum(selection, table_container) {
                 temp[2] = temp[2] + '_' + temp[3]
             }
             if (['input', 'output', 'employment'].includes(temp[1])) {
-                if (balanceobj[temp[1]][temp[2]]) {
+                if (balanceobj[temp[1]][temp[2]])
                     balanceobj[temp[1]][temp[2]] += element[subelement] * selection.amount
-                } else {
+                else
                     balanceobj[temp[1]][temp[2]] = element[subelement] * selection.amount
-                }
+
             }
 
         }
     }
     createSumTable(balanceobj, selection, table_container)
-    addDependents(balanceobj)
+
+    let goods_collection = [balanceobj]
+    let temp = balanceobj
+    let buildings_collection = []
+    for (let i = 0; i < precision; i++) {
+        let temp2 = addDependents(temp)
+        buildings_collection.push(temp2)
+        temp = iterate(temp2)
+        goods_collection.push(temp)
+    }
+
+    let all_employment = {},
+        all_input = {},
+        all_output = {},
+        all_buildings = {},
+        additional_product = {}
+    for (let entry of goods_collection) {
+        for (let input in entry.input) {
+            if (!all_input[input])
+                all_input[input] = entry.input[input]
+            else
+                all_input[input] += entry.input[input]
+        }
+        for (let output in entry.output) {
+            if (!all_output[output])
+                all_output[output] = entry.output[output]
+            else
+                all_output[output] += entry.output[output]
+        }
+        for (let employment in entry.employment) {
+            if (!all_employment[employment])
+                all_employment[employment] = entry.employment[employment]
+            else
+                all_employment[employment] += entry.employment[employment]
+        }
+    }
+    for (let entry of buildings_collection) {
+        for (let subentry of entry) {
+            if (!all_buildings[subentry.name])
+                all_buildings[subentry.name] = subentry.amount
+            else
+                all_buildings[subentry.name] += subentry.amount
+        }
+    }
+    for (let item in all_output) {
+        if (!all_input[item]) {
+            additional_product[item] = Math.round(all_output[item])
+        } else {
+            additional_product[item] = Math.round(all_output[item] - all_input[item])
+        }
+    }
+    $('#total').append(_('br'), _('hr'), 'ALL BUILDINGS NEEDED', _('br'))
+    for (let entry in all_buildings) {
+        $('#total').append(entry, ': ', all_buildings[entry].toFixed(4), _('br'))
+    }
+    $('#total').append(_('br'), _('hr'), 'WORKERS', _('br'))
+    for (let entry in all_employment) {
+        $('#total').append(entry, ': ', Math.round(all_employment[entry]), _('br'))
+    }
+    $('#total').append(_('br'), _('hr'), 'TOTAL OUTPUT', _('br'))
+    for (let entry in additional_product) {
+        if (Math.round(additional_product[entry]) !== 0)
+            $('#total').append(entry, ': ', Math.round(additional_product[entry]), _('br'))
+    }
 }
 
 /**
@@ -343,7 +406,7 @@ function addBuilding() {
  * @param {*} balance Object that stores input and output goods of the processes
  */
 function addDependents(balance) {
-    $('#total').innerHTML = ''
+    var output = []
     let good_buildings = [] // Will include all production method groups that share an output with the demanded input good, always uses the production method that generates most of this good
     let unique_good_buildings = [] // Same, but will not include duplicates by summing over production method groups or in case multiple buildings are candidates, chooses one depending on preferences
     for (let building in data.buildings) {
@@ -351,7 +414,8 @@ function addDependents(balance) {
             if (production_method_group !== 'pmg_dummy') {
                 for (let production_method of production_method_group.production_methods) {
                     if (production_method.building_modifiers && production_method.building_modifiers.workforce_scaled) {
-                        let max = { building: '', pmg: '', pm: '', amount: 0 }
+                        let max = { building: '', pmg: '', pm: '', amount: -1000 }
+
                         for (let output in production_method.building_modifiers.workforce_scaled) {
                             let temp = output.split('_')
                             if (temp.length === 5) {
@@ -365,18 +429,19 @@ function addDependents(balance) {
                                         max.pmg = production_method_group.name
                                         max.pm = production_method.name
                                         max.good = output
+
                                     }
                                 }
                             }
                         }
-                        if (max.amount !== 0) good_buildings.push(max)
+                        if (max.amount !== -1000) good_buildings.push(max)
                     }
                 }
             }
         }
     }
-
     let checkedGoods = [] // Goods whose supply has already been established by adding an appropriate building
+    // THE BELOW CODE IS WRONG, BECAUSE THERE CAN BE MORE THAN 2 PMGs and also it will compare the building to itself???
     for (let building1 of good_buildings) {
         for (let building2 of good_buildings) {
             if (building1.good === building2.good && !checkedGoods.includes(building1.good) && (!conflicts.includes(building2.good) || building1.building === preferences.get(building2.good))) {
@@ -390,13 +455,67 @@ function addDependents(balance) {
         }
     }
 
-    // Output
-    $('#total').append(document.createTextNode('You will need:'), _('hr'), _('br'))
     for (let requested_good in balance.input) {
         for (let building of unique_good_buildings) {
             if (building.good.includes(requested_good)) {
-                $('#total').append(document.createTextNode((building.good.split('_').length === 5 ? (building.good.split('_')[2] + '_' + building.good.split('_')[3]) : building.good.split('_')[2]) + ' ' + building.output * (balance.input[requested_good] / building.output) + '    ---> ' + (balance.input[requested_good] / building.output).toFixed(2) + 'x ' + building.building), _('hr'), _('br'))
+                output.push({ name: building.building, amount: balance.input[requested_good] / building.output })
             }
         }
     }
+    return output
+}
+
+/**
+ * @param {*} input Object containing buildings {name: 'building_logging_camp', amount: 0.3}
+ * @returns Input and outputs of these buildings
+ */
+function iterate(input) {
+    balance = { input: {}, output: {}, employment: {} }
+    let aaa = []
+    for (let entry of input) {
+        for (let pmg of data.buildings[entry.name].production_method_groups) {
+            if (data.buildings[entry.name].production_method_groups.at(-1).production_methods.at(-1).building_modifiers) {
+                for (let entry2 of pmg.production_methods) {
+                    if (default_pms.includes(entry2.name)) {
+                        aaa.push({ good: entry2.building_modifiers.workforce_scaled, amount: entry.amount })
+                        aaa.push({ employment: entry2.building_modifiers.level_scaled, amount: entry.amount })
+                    }
+                }
+            }
+        }
+    }
+    console.log(aaa)
+    aaa = aaa.filter(Boolean)
+    for (let element of aaa) {
+        for (let subelement in element.good) {
+            let temp = subelement.split('_')
+            if (temp.length === 5) {
+                temp[2] = temp[2] + '_' + temp[3]
+            }
+            if (['input', 'output', 'employment'].includes(temp[1])) {
+                if (balance[temp[1]][temp[2]]) {
+                    balance[temp[1]][temp[2]] += element.good[subelement] * element.amount
+                } else {
+                    balance[temp[1]][temp[2]] = element.good[subelement] * element.amount
+                }
+            }
+
+        }
+        for (let subelement in element.employment) {
+            let temp = subelement.split('_')
+            if (temp.length === 5) {
+                temp[2] = temp[2] + '_' + temp[3]
+            }
+            if (['input', 'output', 'employment'].includes(temp[1])) {
+                if (balance[temp[1]][temp[2]]) {
+                    balance[temp[1]][temp[2]] += element.employment[subelement] * element.amount
+                } else {
+                    balance[temp[1]][temp[2]] = element.employment[subelement] * element.amount
+                }
+            }
+
+        }
+    }
+    console.log(balance)
+    return balance
 }
