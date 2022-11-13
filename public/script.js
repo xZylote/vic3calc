@@ -358,6 +358,7 @@ function addBuilding() {
     div.classList.add('input-group')
     xbutton.onclick = function () {
         this.parentElement.remove()
+        $('#initial').style.display = 'inline'
         changeSelection()
     }
 
