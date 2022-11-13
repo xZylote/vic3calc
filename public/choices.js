@@ -1,5 +1,5 @@
 // These are all the highest-level production methods
-const default_pms = [
+let default_pms = [
     'pm_baking_powder',
     'pm_vacuum_canning',
     'pm_patent_stills',
@@ -48,17 +48,11 @@ const default_pms = [
     'pm_apple_orchards',
     'pm_compression_ignition_tractors',
     'pm_worker_cooperative_farm',
-    'pm_chemical_fertilizer',
     'pm_vineyards',
-    'pm_compression_ignition_tractors',
     'pm_chemical_fertilizer_building_rice_farm',
     'pm_fig_orchards',
     'pm_steam_threshers',
-    'pm_chemical_fertilizer',
     'pm_vineyards_building_maize_farm',
-    'pm_compression_ignition_tractors',
-    'pm_chemical_fertilizer',
-    'pm_compression_ignition_tractors',
     'pm_intensive_grazing_ranch',
     'pm_mechanized_slaughtering',
     'pm_electric_fencing',
@@ -71,29 +65,21 @@ const default_pms = [
     'pm_diesel_pump_building_iron_mine',
     'pm_dynamite_building_iron_mine',
     'pm_steam_donkey_mine',
-    'pm_rail_transport_mine',
     'pm_worker_cooperative_building_iron_mine',
     'pm_diesel_pump_building_lead_mine',
     'pm_dynamite_building_lead_mine',
-    'pm_steam_donkey_mine',
-    'pm_rail_transport_mine',
     'pm_worker_cooperative_building_lead_mine',
     'pm_diesel_pump_building_sulfur_mine',
     'pm_dynamite_building_sulfur_mine',
-    'pm_steam_donkey_mine',
-    'pm_rail_transport_mine',
     'pm_worker_cooperative_building_sulfur_mine',
     'pm_diesel_pump_building_gold_mine',
     'pm_dynamite_building_gold_mine',
-    'pm_steam_donkey_mine',
-    'pm_rail_transport_mine',
     'pm_worker_cooperative_building_gold_mine',
     'default_building_gold_fields',
     'automatic_irrigation_building_coffee_plantation',
     'pm_steam_rail_transport',
     'pm_worker_cooperative_plantation',
     'automatic_irrigation_building_cotton_plantation',
-    'pm_worker_cooperative_plantation',
     'automatic_irrigation_building_dye_plantation',
     'automatic_irrigation_building_opium_plantation',
     'automatic_irrigation_building_tea_plantation',
@@ -121,7 +107,6 @@ const default_pms = [
     'pm_film_art',
     'pm_independent_artists',
     'pm_oil-fired_plant',
-    'pm_worker_cooperative_industry',
     'pm_modern_port',
     'pm_switch_boards',
     'pm_professional_bureaucrats',
@@ -137,8 +122,6 @@ const default_pms = [
     'pm_log_carts',
     'pm_worker_cooperative_building_logging_camp',
     'default_building_rubber_plantation',
-    'pm_steam_rail_transport',
-    'pm_worker_cooperative_plantation',
     'pm_steam_trawlers',
     'pm_flash_freezing_building_fishing_wharf',
     'pm_worker_cooperative_building_fishing_wharf',
@@ -147,7 +130,6 @@ const default_pms = [
     'pm_worker_cooperative_building_whaling_station',
     'pm_combustion_derricks',
     'pm_tanker_cars',
-    'pm_worker_cooperative_industry',
     'pm_canal',
     'pm_diesel_trains',
     'pm_steel_passenger_carriages',
@@ -173,7 +155,7 @@ const conflicts = [
 
 // These are the buildings that will be chosen in the above context
 // It would be appropiate to let the user change his preferences (e.g. playing as sweden, you can have no silk farms)
-const preferences = new Map();
+let preferences = new Map();
 preferences.set('building_output_sugar_add', 'building_sugar_plantation')
 preferences.set('building_output_oil_add', 'building_oil_rig')
 preferences.set('building_output_fabric_add', 'building_cotton_plantation')

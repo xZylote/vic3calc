@@ -81,7 +81,7 @@ function changeSelection() {
     }
 
     $('#info').innerHTML = ''
-    $('#total').innerHTML = ''
+
     for (let building of selection) {
         createTable(building)
     }
@@ -162,7 +162,7 @@ function createTable(selection) {
  * @param {*} table_container DOM-Element into which the total sum is to be inserted
  */
 function calculateSum(selection, table_container) {
-
+    $('#total').innerHTML = ''
     let i = 0
     let indices = [],
         balance = [],
@@ -268,7 +268,6 @@ function calculateSum(selection, table_container) {
 }
 
 /**
- * 
  * @param {*} balance Object of form {input: [wood: 23, steel: 12], output: [fabric: 2]}
  * @param {*} selection Object that includes name, amount and index of the building that the data is for
  * @param {*} table_container DOM-Element into which the total sum is to be inserted
@@ -443,7 +442,7 @@ function addDependents(balance) {
         }
     }
     let checkedGoods = [] // Goods whose supply has already been established by adding an appropriate building
-    // THE BELOW CODE IS WRONG, BECAUSE THERE CAN BE MORE THAN 2 PMGs and also it will compare the building to itself???
+    // THE BELOW CODE IS WRONG, BECAUSE THERE CAN BE MORE THAN 2 PMGs and also it will compare the building to itself
     for (let building1 of good_buildings) {
         for (let building2 of good_buildings) {
             if (building1.good === building2.good && !checkedGoods.includes(building1.good) && (!conflicts.includes(building2.good) || building1.building === preferences.get(building2.good))) {
@@ -479,14 +478,17 @@ function iterate(input) {
             if (data.buildings[entry.name].production_method_groups.at(-1).production_methods.at(-1).building_modifiers) {
                 for (let entry2 of pmg.production_methods) {
                     if (default_pms.includes(entry2.name)) {
-                        aaa.push({ good: entry2.building_modifiers.workforce_scaled, amount: entry.amount })
-                        aaa.push({ employment: entry2.building_modifiers.level_scaled, amount: entry.amount })
+                        if (entry2.building_modifiers) {
+                            if (entry2.building_modifiers.workforce_scaled)
+                                aaa.push({ good: entry2.building_modifiers.workforce_scaled, amount: entry.amount })
+                            if (entry2.building_modifiers.level_scaled)
+                                aaa.push({ employment: entry2.building_modifiers.level_scaled, amount: entry.amount })
+                        }
                     }
                 }
             }
         }
     }
-    console.log(aaa)
     aaa = aaa.filter(Boolean)
     for (let element of aaa) {
         for (let subelement in element.good) {
@@ -518,6 +520,22 @@ function iterate(input) {
 
         }
     }
-    console.log(balance)
     return balance
 }
+
+$('#pm_prefs').addEventListener("keydown", function f(event) {
+    if ((event.keyCode == 10 || event.keyCode == 13) && event.ctrlKey) {
+        event.preventDefault()
+        default_pms = $('#pm_prefs').innerHTML.replace(/(\r\n|\n|\r)/gm, "").replace(/\s/g, "").split(',')
+        $('#pm_prefs').style.color = 'black'
+    } else $('#pm_prefs').style.color = 'darkred'
+})
+$('#building_prefs').addEventListener("keydown", function f(event) {
+    if ((event.keyCode == 10 || event.keyCode == 13) && event.ctrlKey) {
+        for (let entry in $('#building_prefs').innerHTML.replace(/(\r\n|\n|\r)/gm, "").replace(/\s/g, "").split(';')) {
+            let temp = entry.split(',')
+            preferences.set(temp[0], temp[1])
+        }
+        $('#pm_prefs').style.color = 'black'
+    } else $('#pm_prefs').style.color = 'darkred'
+})
