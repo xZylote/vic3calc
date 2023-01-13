@@ -1,3 +1,5 @@
+Try it out on the [Website](https://vic3calc.com/)
+
 # Victoria 3 Calculator
 The idea behind this project is to automatically calculate resource and building requirements for supply chains in [Victoria 3](https://www.paradoxinteractive.com/games/victoria-3/about).
 
