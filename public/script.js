@@ -9,18 +9,71 @@ $ = function (x) {
 }
 _ = (x) => document.createElement(x)
 
-//---Read Data from Game Files---//
-let data = { buildings: {}, goods: {}, production_methods: {}, production_method_groups: {} }
-let precision = 10
+function sortObject(unordered) {
+    return Object.keys(unordered)
+        .sort()
+        .reduce((obj, key) => {
+                obj[key] = unordered[key]; 
+                return obj;
+            },
+            {}
+        );
+}
 
-for (let type in files) {
-    for (let path of files[type]) {
-        jomini.Jomini.initialize().then((parser) => {
+function humanizeBuildName(name) {
+    let humanized = name
+        .replace(/^building_/g, '')
+        .replace(/_building_.*$/g, '')
+        .replace(/_/g, ' ')
+    if (humanized.includes('ownership')) {
+        humanized = 'ownership'
+    }
+    humanized =  humanized.charAt(0).toUpperCase() + humanized.slice(1)
+    return humanized;
+}
+
+function humanizeGroupName(name) {
+    let humanized = name
+        .replace(/^pmg_/g, '')
+        .replace(/_building_.*$/g, '')
+        .replace(/_/g, ' ')
+    if (humanized.includes('ownership')) {
+        humanized = 'ownership'
+    }
+    humanized =  humanized.charAt(0).toUpperCase() + humanized.slice(1)
+    return humanized;
+}
+
+function humanizeMethodName(name) {
+    let humanized = name
+        .replace(/^pm_/g, '')
+        .replace(/_building_.*$/g, '')
+        .replace(/_/g, ' ')
+    if (humanized.includes('ownership')) {
+        humanized = 'ownership'
+    }
+    humanized =  humanized.charAt(0).toUpperCase() + humanized.slice(1)
+    return humanized;
+}
+
+//---Read Data from Game Files---//
+let data = { buildings: {}, goods: {}, production_methods: {}, production_method_groups: {}, max_group_size: 2 }
+let production_method_preferences = {}
+let precision = 10
+let radio_id_count = 0
+let radio_group_id_count = 0
+const radio_inputs = []
+const PRODUCTION_METHOD_LOCAL_STORAGE_KEY = 'production_method_preferences'
+
+async function loadData() {
+    for (let type in files) {
+        for (let path of files[type]) {
+            const parser = await jomini.Jomini.initialize()
             let out = parser.parseText(readFile('./' + type + '/' + path))
             for (let prop in out) {
                 data[type][prop] = out[prop]
             }
-        })
+        }
     }
 }
 
@@ -39,8 +92,178 @@ function readFile(path) {
     return data
 }
 
+function preferencesUpdated() {
+    const selection_table_container = '#production_method_preferences'
+    const radioButtons = $(selection_table_container).querySelectorAll('input[type="radio"]:checked')
+    for (let e of radioButtons) {
+        const input_details = radio_inputs.find(r => r.input === e.id)
+        const building = data.buildings[input_details.building];
+        if (!building) {
+            throw new Error('Could not find building for input "' + e.id + '"')
+        }
+        const group = building.production_method_groups.find(g => g.name === input_details.group)
+        if (!group) {
+            throw new Error('Could not find group for input "' + e.id + '"')
+        }
+        const method = group.production_methods.find(m => m.name === input_details.method);
+        if (!method) {
+            throw new Error('Could not find method for input "' + e.id + '"')
+        }
+        production_method_preferences[input_details.building][input_details.group] = method.name
+    }
+    // save the preference map to local storage
+    localStorage.setItem(PRODUCTION_METHOD_LOCAL_STORAGE_KEY, JSON.stringify(production_method_preferences))
+}
+
+function generatePreferenceMap(data) {
+    if (localStorage.getItem(PRODUCTION_METHOD_LOCAL_STORAGE_KEY)) {
+        return JSON.parse(localStorage.getItem(PRODUCTION_METHOD_LOCAL_STORAGE_KEY))
+    }
+    const preferences = {}
+    for (const [buildingName, building] of Object.entries(data.buildings)) {
+        preferences[buildingName] = {}
+        if (building.production_method_groups) {
+            for (const group of building.production_method_groups) {
+                if (group.name) {
+                    preferences[buildingName][group.name] = {}
+                    const methods = group.production_methods;
+                    // set the last production method as the default
+                    if (Array.isArray(methods)) {
+                        preferences[buildingName][group.name] = methods[methods.length - 1].name;
+                    }
+                }
+            }
+        }
+        
+        if (
+            // filter out buildings with 0 production methods   
+            Object.keys(preferences[buildingName]).length === 0 || 
+            // filter out non-production related buildings
+            data.buildings[buildingName].buildable === false ||
+            data.buildings[buildingName].expandable === false
+        ) {
+            delete preferences[buildingName]
+        }
+        
+    }
+    return preferences;
+}
+
+
+
+function generatePreferenceSelectionGrid(buildingName, methodPreferences, data, inputs, preferencesUpdatedCallback) {
+    const grid = _('div')
+    const header = _('div')
+    header.classList.add('grid')
+    
+    const building = data.buildings[buildingName]
+    for (const group of building.production_method_groups) {
+        const div = _('div')
+        div.classList.add('header')
+        div.classList.add('fw-bold')
+        div.innerHTML = humanizeGroupName(group.name)
+        header.append(div)
+    }
+
+    if (header.children.length < data.max_group_size) {
+        // pad the header div to data.max_group_size children
+        for (let i = header.children.length; i < data.max_group_size; i++) {
+            header.append(_('div'))
+        }
+    }
+
+    const groups = _('div')
+    groups.classList.add('grid')
+    for (const group of building.production_method_groups) {
+        const div = _('div')
+        for (const method of group.production_methods) {
+            const label = _('label')
+            const input = _('input')
+            input.type = 'radio'
+            input.onclick = preferencesUpdatedCallback
+            input.name = buildingName + '_' + group.name + '_' + radio_group_id_count
+            input.id = 'radio_' + radio_id_count++
+            input.value = method.name
+            if (methodPreferences[buildingName][group.name] === method.name) {
+                input.checked = true
+            }
+            inputs.push({
+                building: buildingName,
+                group: group.name,
+                method: method.name,
+                input: input.id
+            })
+
+            const method_thumbnail = _('img')
+            method_thumbnail.title = humanizeMethodName(method.name)
+            method_thumbnail.src = data.production_methods[method.name].texture.replace('dds', 'jpg')
+
+            label.append(input)
+            label.append(method_thumbnail)
+            div.append(label, _('br'))
+        }
+        groups.append(div)
+        radio_group_id_count++
+    }
+
+    if (groups.children.length < data.max_group_size) {
+        // pad the header div to data.max_group_size children
+        for (let i = groups.children.length; i < data.max_group_size; i++) {
+            groups.append(_('div'))
+        }
+    }
+
+    grid.append(header)
+    grid.append(groups)
+    return grid
+}
+
+function generateProductionPreferenceSelectionTable(preferences, data) {
+    const table = _('table')
+    const thead = _('thead')
+    const tr_header = _('tr')
+    const th_building = _('th')
+    th_building.innerHTML = 'Building'
+    const th_production_method = _('th')
+    th_production_method.innerHTML = 'Production Methods'
+    tr_header.append(th_building, th_production_method)
+    thead.append(tr_header)
+    table.append(thead)
+    const tbody = _('tbody')
+    for (const [building_name, building] of Object.entries(preferences)) {
+        const row = _('tr')
+        const building_col = _('td')
+        const building_col_div = _('div')
+
+        const name_span = _('span')
+        name_span.classList.add('fw-bold')
+        name_span.innerHTML = humanizeBuildName(building_name)
+
+        const building_thumbnail = _('img')
+        building_thumbnail.classList.add('mt-2')
+        building_thumbnail.title = building_name
+        building_thumbnail.src = data.buildings[building_name].texture.replace('dds', 'jpg')
+        building_col_div.classList.add('text-center')
+        
+        building_col_div.append(name_span, _('br'), building_thumbnail)
+        building_col.append(building_col_div)
+
+        const method_col = _('td')
+        method_col.append(generatePreferenceSelectionGrid(building_name, preferences, data, radio_inputs, () => {
+            preferencesUpdated()
+            changeSelection()
+        }))
+
+        row.append(building_col, method_col)
+        tbody.append(row)
+    }
+    table.append(tbody)
+    return table;
+}
+
 //---Integrate all Paradox-format Data into JSON---//
-window.onload = function () {
+window.onload = async function () {
+    await loadData()
     for (let production_method_group in data.production_method_groups) {
         for (let production_method1 of data.production_method_groups[production_method_group].production_methods) {
             for (let production_method2 in data.production_methods) {
@@ -53,6 +276,10 @@ window.onload = function () {
         }
     }
     for (let building in data.buildings) {
+        // find the max number of production method groups for rendering purposes
+        if (data.max_group_size < data.buildings[building].production_method_groups.length) {
+            data.max_group_size = data.buildings[building].production_method_groups.length
+        }
         for (let production_method_group1 of data.buildings[building].production_method_groups) {
             for (let production_method_group2 in data.production_method_groups) {
                 if (production_method_group1 === production_method_group2) {
@@ -63,6 +290,27 @@ window.onload = function () {
             }
         }
     }
+
+    data.buildings = sortObject(data.buildings)
+    data.production_method_groups = sortObject(data.production_method_groups)
+
+    production_method_preferences = generatePreferenceMap(data)
+
+    createProductionMethodPreferencesSection()
+}
+
+function createProductionMethodPreferencesSection() {
+    const resetButton = _('button')
+    resetButton.classList.add('btn', 'btn-primary', 'mt-2')
+    resetButton.innerHTML = 'Reset production methods to most efficient'
+    resetButton.onclick = () => {
+        localStorage.removeItem(PRODUCTION_METHOD_LOCAL_STORAGE_KEY)
+        production_method_preferences = generatePreferenceMap(data)
+        createProductionMethodPreferencesSection()
+    }
+    $('#production_method_preferences').innerHTML = ''
+    $('#production_method_preferences').append(resetButton)
+    $('#production_method_preferences').append(generateProductionPreferenceSelectionTable(production_method_preferences, data))
 }
 
 
@@ -93,10 +341,8 @@ function createTable(selection) {
     let table_container = _('div')
     let table = _('table')
     table.id = 'table_' + selection.index
-    let table_production_method_groups = _('table')
     let tr_header = _('tr')
     let tr_selected = _('tr')
-    let tr_production_method_groups = _('tr')
     let th_name = _('th'),
         th_multiplier = _('th'),
         th_technologies = _('th'),
@@ -108,32 +354,6 @@ function createTable(selection) {
     let building_thumbnail = _('img')
     let mult_input = _('p')
 
-    for (let production_method_group in data.buildings[selection.name].production_method_groups) {
-        let th_production_method_group = _('th')
-        let td_production_method_group = _('td')
-        for (let production_method in data.buildings[selection.name].production_method_groups[production_method_group].production_methods) {
-            let tr_production_methods = _('tr')
-            let radio_wrapper = _('label')
-            let production_method_radio = _('input')
-            let production_method_thumbnail = _('img')
-
-            production_method_radio.onclick = () => calculateSum(selection, table_container)
-            production_method_radio.checked = true // Dirty, but will select all the last ones efficiently
-            production_method_radio.type = 'radio'
-            production_method_radio.name = data.buildings[selection.name].production_method_groups[production_method_group].name
-            production_method_radio.value = data.buildings[selection.name].production_method_groups[production_method_group].production_methods[production_method].name
-            production_method_thumbnail.title = data.buildings[selection.name].production_method_groups[production_method_group].production_methods[production_method].name
-            production_method_thumbnail.src = data.buildings[selection.name].production_method_groups[production_method_group].production_methods[production_method].texture.replace('dds', 'jpg')
-
-            radio_wrapper.append(production_method_radio, production_method_thumbnail)
-            tr_production_methods.append(radio_wrapper)
-            td_production_method_group.append(tr_production_methods)
-        }
-        th_production_method_group.innerText = data.buildings[selection.name].production_method_groups[production_method_group].name
-        tr_production_method_groups.append(td_production_method_group)
-        table_production_method_groups.append(th_production_method_group, tr_production_method_groups)
-    }
-
     th_multiplier.innerText = '#'
     th_name.innerText = 'Building'
     th_technologies.innerText = 'Required Technologies'
@@ -144,8 +364,13 @@ function createTable(selection) {
     td_technologies.innerText = data.buildings[selection.name].unlocking_technologies ? data.buildings[selection.name].unlocking_technologies : 'none'
 
     td_multiplier.append(mult_input)
-    td_name.append(document.createTextNode(selection.name.split('_').slice(1).join(' ')), building_thumbnail)
-    td_production_method_groups.append(table_production_method_groups)
+    td_name.classList.add('text-center')
+    td_name.classList.add('fw-bold')
+    td_name.append(document.createTextNode(humanizeBuildName(selection.name)), _('br'), building_thumbnail)
+    td_production_method_groups.append(generatePreferenceSelectionGrid(selection.name, production_method_preferences, data, radio_inputs, () => {
+        preferencesUpdated()
+        calculateSum(selection, table_container)
+    }))
     tr_header.append(th_multiplier, th_name, th_technologies, th_production_method_groups)
     tr_selected.append(td_multiplier, td_name, td_technologies, td_production_method_groups)
     table.append(tr_header)
@@ -163,24 +388,28 @@ function createTable(selection) {
  */
 function calculateSum(selection, table_container) {
     $('#total').innerHTML = ''
-    let i = 0
-    let indices = [],
-        balance = [],
+    let balance = [],
         balanceobj = { input: {}, output: {}, employment: {} }
-    let radioButtons = $('#table_' + selection.index).querySelectorAll('input[type="radio"]')
-
-    for (let radioButton of radioButtons) {
-        if (radioButton.checked) {
-            indices.push(Array.prototype.indexOf.call(radioButton.parentElement.parentElement.parentElement.childNodes, radioButton.parentElement.parentElement))
+    const selection_table_container = '#table_' + selection.index
+    const radioButtons = $(selection_table_container).querySelectorAll('input[type="radio"]:checked')
+    for (let e of radioButtons) {
+        const input_details = radio_inputs.find(r => r.input === e.id)
+        const building = data.buildings[input_details.building];
+        if (!building) {
+            throw new Error('Could not find building for input "' + e.id + '"')
         }
-    }
-
-    for (let e of $('#table_' + selection.index).querySelectorAll('input[type="radio"]:checked')) {
-        if (data.buildings[selection.name].production_method_groups[i].production_methods[indices[i]].building_modifiers) {
-            balance.push(data.buildings[selection.name].production_method_groups[i].production_methods[indices[i]].building_modifiers.workforce_scaled)
-            balance.push(data.buildings[selection.name].production_method_groups[i].production_methods[indices[i]].building_modifiers.level_scaled)
+        const group = building.production_method_groups.find(g => g.name === input_details.group)
+        if (!group) {
+            throw new Error('Could not find group for input "' + e.id + '"')
         }
-        i++
+        const method = group.production_methods.find(m => m.name === input_details.method);
+        if (!method) {
+            throw new Error('Could not find method for input "' + e.id + '"')
+        }
+        if (method.building_modifiers) {
+            balance.push(method.building_modifiers.workforce_scaled)
+            balance.push(method.building_modifiers.level_scaled)
+        }
     }
 
     balance = balance.filter(Boolean)
@@ -253,9 +482,44 @@ function calculateSum(selection, table_container) {
         }
     }
     $('#total').append(_('br'), _('hr'), 'ALL BUILDINGS NEEDED', _('br'))
-    for (let entry in all_buildings) {
-        $('#total').append(entry, ': ', all_buildings[entry].toFixed(4), _('br'))
+    const container = _('div')
+    const sorted = Object.keys(all_buildings).sort((a, b) => all_buildings[b] - all_buildings[a])
+    for (let entry of sorted) {
+        const building_col_div = _('div')
+        building_col_div.classList.add('container')
+        building_col_div.classList.add('align-middle')
+        const row = _('div')
+        row.classList.add('align-items-center')
+        row.classList.add('d-flex')
+        row.classList.add('flex-row')
+
+        const name_span = _('span')
+        name_span.classList.add('fw-bold')
+        name_span.innerHTML = humanizeBuildName(entry)
+
+        const building_thumbnail = _('img')
+        building_thumbnail.classList.add('mt-2')
+        building_thumbnail.style = 'width: 50px; height: 50px;'
+        building_thumbnail.title = entry
+        building_thumbnail.src = data.buildings[entry].texture.replace('dds', 'jpg')
+
+        const col1 = _('div')
+        col1.classList.add('col-2')
+        col1.append(name_span)
+        const col2 = _('div')
+        col2.classList.add('col-1')
+        col2.classList.add('flex-shrink-1')
+        col2.append(building_thumbnail)
+        const col3 = _('div')
+        col3.classList.add('col')
+        col3.classList.add('flex-grow-1')
+        col3.append('x  ' +all_buildings[entry].toFixed(4))
+        row.append(col1, col2, col3)
+
+        building_col_div.append(row)
+        container.append(building_col_div)
     }
+    $('#total').append(container)
     $('#total').append(_('br'), _('hr'), 'WORKERS', _('br'))
     for (let entry in all_employment) {
         $('#total').append(entry, ': ', Math.round(all_employment[entry]), _('br'))
@@ -373,10 +637,12 @@ function addBuilding() {
             let option = _('option')
             option.value = entry
             option.innerText = entry.substring(9).split('_').map(word => { return word.charAt(0).toUpperCase() + word.slice(1) }).join(' ')
+            if (entry == 'building_coal_mine') option.setAttribute('selected', 'selected')
             select.append(option)
         }
     }
     $('#initial').style.display = 'none'
+    changeSelection()
 }
 
 /**
@@ -423,7 +689,8 @@ function addDependents(balance) {
                                 temp[2] = temp[2] + '_' + temp[3]
                             }
                             if (temp[1] === 'output' && balance.input[temp[2]]) {
-                                if (default_pms.includes(production_method.name)) {
+                                // if (default_pms.includes(production_method.name)) {
+                                if (production_method_preferences[building] && production_method_preferences[building][production_method_group.name] === production_method.name) {
                                     if (max.amount <= production_method.building_modifiers.workforce_scaled[output]) {
                                         max.amount = production_method.building_modifiers.workforce_scaled[output]
                                         max.building = building
@@ -477,7 +744,7 @@ function iterate(input) {
         for (let pmg of data.buildings[entry.name].production_method_groups) {
             if (data.buildings[entry.name].production_method_groups.at(-1).production_methods.at(-1).building_modifiers) {
                 for (let entry2 of pmg.production_methods) {
-                    if (default_pms.includes(entry2.name)) {
+                    if (production_method_preferences[entry.name] && production_method_preferences[entry.name][pmg.name] === entry2.name) {
                         if (entry2.building_modifiers) {
                             if (entry2.building_modifiers.workforce_scaled)
                                 aaa.push({ good: entry2.building_modifiers.workforce_scaled, amount: entry.amount })
@@ -523,13 +790,6 @@ function iterate(input) {
     return balance
 }
 
-$('#pm_prefs').addEventListener("keydown", function f(event) {
-    if ((event.keyCode == 10 || event.keyCode == 13) && event.ctrlKey) {
-        event.preventDefault()
-        default_pms = $('#pm_prefs').innerHTML.replace(/(\r\n|\n|\r)/gm, "").replace(/\s/g, "").split(',')
-        $('#pm_prefs').style.color = 'black'
-    } else $('#pm_prefs').style.color = 'darkred'
-})
 $('#building_prefs').addEventListener("keydown", function f(event) {
     if ((event.keyCode == 10 || event.keyCode == 13) && event.ctrlKey) {
         for (let entry in $('#building_prefs').innerHTML.replace(/(\r\n|\n|\r)/gm, "").replace(/\s/g, "").split(';')) {

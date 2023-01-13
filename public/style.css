@@ -38,8 +38,9 @@ label img {
 }
 
 
-[type=radio]:checked + img {
-    outline: groove 3px red;
+[type=radio]:not(:checked) + img {
+    filter: grayscale(1);
+    opacity: 0.5;
 }
 
 [type=number]{
@@ -52,4 +53,22 @@ label img {
 
 details{
     user-select: none;
+}
+
+.grid {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.grid div {
+    flex: 1 1 0%;
+    margin: 5px;
+    padding: 5px;
+    text-align: center;
+}
+
+.grid .header {
+    background-color: aliceblue;
 }
