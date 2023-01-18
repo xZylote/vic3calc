@@ -20,3 +20,9 @@ Then head to the specified address (default is <http://localhost:5173>).
 ## Future Ideas
 
 Calculate for multiple selected buildings
+
+## Disclaimer
+
+All assets under `public/gfx` and `src/assets/vic3` are copyrighted by [Paradox Interactive](https://www.paradoxinteractive.com/)
+
+Favicon made by [TroyDaGamer](https://www.steamgriddb.com/icon/24061)

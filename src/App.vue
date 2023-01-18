@@ -1,35 +1,57 @@
 <template>
   <div class="justify-center w-full flex flex-col items-center">
     <div class="header w-full flex justify-center p-4">
-      <div class="w-2/3 flex justify-center text-amber-50 font-bold">Victoria 3 Production Calculator</div>
+      <div class="w-2/3 flex justify-center text-yellow-50 font-bold opacity-90">Victoria 3 Production Calculator</div>
     </div>
     <div class="flex flex-row w-full p-4">
-      <div class="w-full">
+      <div class="flex flex-col gap-2 w-full">
         <h1 class="font-semibold">Production methods</h1>
         <PmSelection></PmSelection>
       </div>
       <div class="divider divider-horizontal"></div>
       <div class="w-full flex flex-col">
-        <MultipleProducerSelection></MultipleProducerSelection>
+        <div class="flex flex-col gap-2">
+          <h1 class="font-semibold">Goods with multiple producer options</h1>
+          <MultipleProducerSelection></MultipleProducerSelection>
+        </div>
         <div class="divider"></div>
         <div v-if="error">
           <div class="font-semibold">{{ error }}</div>
         </div>
-        <h1 class="font-semibold">Select building and amount</h1>
-        <div class="w-full flex flex-row">
-          <BuildingSelection v-model="selection" />
-          <div class="w-full flex flex-col text-center gap-2">
-            <h1 class="font-semibold">Output</h1>
-            <GoodAmount v-if="outputGoods" :goods="outputGoods" :multiplier="selection.amount"></GoodAmount>
-          </div>
-          <div class="w-full flex flex-col text-center gap-2">
-            <h1 class="font-semibold">Input</h1>
-            <GoodAmount v-if="inputGoods" :goods="inputGoods" :multiplier="selection.amount"></GoodAmount>
+        <div class="flex flex-col gap-2">
+          <h1 class="font-semibold">Select building and amount</h1>
+          <div class="w-full flex flex-row">
+            <BuildingSelection v-model="selection" />
+            <div class="w-full flex flex-col text-center gap-2">
+              <h1 class="font-semibold">Output</h1>
+              <GoodAmount v-if="outputGoods" :goods="outputGoods" :multiplier="selection.amount"></GoodAmount>
+            </div>
+            <div class="w-full flex flex-col text-center gap-2">
+              <h1 class="font-semibold">Input</h1>
+              <GoodAmount v-if="inputGoods" :goods="inputGoods" :multiplier="selection.amount"></GoodAmount>
+            </div>
           </div>
         </div>
         <div class="flex w-full flex-col gap-2 text-start justify-center">
           <h1 class="font-semibold">Calculated buildings counts</h1>
           <BuildingsAmount></BuildingsAmount>
+        </div>
+      </div>
+    </div>
+    <div class="w-full flex flex-col text-no-wrap gap-2 justify-center text-white my-footer h-32 p-4">
+      <div class="w-full text-center">
+        Disclaimer: all images displayed on the page are copyrighted by <a href="https://www.paradoxinteractive.com/" class="text-amber-800 hover:text-amber-500">Paradox Interactive</a>
+      </div>
+      <div class="w-full text-center">
+        Favicon <img src="/favicon.ico" class="inline-block w-6" /> made by <a class="text-amber-800 hover:text-amber-500" href="https://www.steamgriddb.com/icon/24061" target="blank">TroyDaGamer</a>
+      </div>
+      <div class="w-full flex flex-row items-center justify-center">
+        <div class="w-full flex gap-2 text-amber-800 hover:text-amber-500 justify-end">
+          <a href="https://www.paradoxinteractive.com/games/victoria-3/about" target="blank">Victoria 3</a>
+        </div>
+        <div class="divider divider-horizontal gap-0"></div>
+        <div class="w-full flex gap-2 text-amber-800 hover:text-amber-500 justify-start">
+          <a href="https://github.com/xZylote/vic3calc" target="blank">Github</a>
         </div>
       </div>
     </div>
@@ -102,5 +124,12 @@ onMounted(() => calculate()); // initial calculation
 <style scoped>
 .header {
   background-image: url('/images/header-bg.jpg');
+}
+.my-footer {
+  background-image: url('/images/header-bg.jpg');
+}
+.my-footer .divider:before,
+.my-footer .divider:after {
+  @apply bg-amber-800 bg-opacity-30;
 }
 </style>

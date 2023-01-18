@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 body {
-    overflow: scroll;
     background-image: url("/images/body-bg.jpg");
     background-repeat: repeat;
 }

@@ -5,7 +5,7 @@
       <Tooltip>
         <div class="flex flex-row gap-1 items-center">
           <div class="flex w-16 justify-end justify-items-end"><img :src="v3Data.goods[goodType]?.texture40" /></div>
-          <div class="w-16 flex justify-start">: {{ amount * multiplier }}</div>
+          <div class="w-16 flex justify-start">x {{ amount * multiplier }}</div>
         </div>
         <template #content>
           {{ v3Data.goods[goodType]?.humanizedName }}

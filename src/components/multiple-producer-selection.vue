@@ -1,35 +1,32 @@
 <template>
-  <div class="flex flex-col">
-    <h1 class="font-semibold">Goods with multiple producer options</h1>
-    <div class="flex flex-wrap">
-      <div class="flex items-center gap-0 w-28" v-for="[goodType, multipleProducer] in entries(store.multipleProducerPreferences)" :key="goodType" @mouseleave="expanded[goodType] = false">
-        <div class="flex flex-col">
-          <TransitionGroup name="list" tag="div" @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" class="m-1">
-            <div
-              v-show="buildingType === multipleProducer.preferredProducer || expanded[goodType]"
-              v-for="(amount, buildingType) in multipleProducer.producers"
-              :key="buildingType"
-              class="cursor-pointer"
-            >
-              <BuildingIcon
-                :building="v3Data.buildings[buildingType]"
-                @click="
-                  () => {
-                    if (!expanded[goodType]) {
-                      expanded[goodType] = !expanded[goodType];
-                    } else {
-                      multipleProducer.preferredProducer = buildingType;
-                    }
+  <div class="flex flex-wrap">
+    <div class="flex items-center gap-0 w-28" v-for="[goodType, multipleProducer] in entries(store.multipleProducerPreferences)" :key="goodType" @mouseleave="expanded[goodType] = false">
+      <div class="flex flex-col">
+        <TransitionGroup name="list" tag="div" @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" class="m-1">
+          <div
+            v-show="buildingType === multipleProducer.preferredProducer || expanded[goodType]"
+            v-for="(amount, buildingType) in multipleProducer.producers"
+            :key="buildingType"
+            class="cursor-pointer hover:opacity-90"
+          >
+            <BuildingIcon
+              :building="v3Data.buildings[buildingType]"
+              @click="
+                () => {
+                  if (!expanded[goodType]) {
+                    expanded[goodType] = !expanded[goodType];
+                  } else {
+                    multipleProducer.preferredProducer = buildingType;
                   }
-                "
-                :active="buildingType === multipleProducer.preferredProducer"
-              />
-            </div>
-          </TransitionGroup>
-        </div>
-        <Icon icon="material-symbols:arrow-right-alt"></Icon>
-        <GoodIcon :good="v3Data.goods[goodType]" :size="32" />
+                }
+              "
+              :active="buildingType === multipleProducer.preferredProducer"
+            />
+          </div>
+        </TransitionGroup>
       </div>
+      <Icon icon="material-symbols:arrow-right-alt"></Icon>
+      <GoodIcon :good="v3Data.goods[goodType]" :size="32" />
     </div>
   </div>
 </template>

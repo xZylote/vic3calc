@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <div class="flex flex-col w-full justify-center items-center gap-2 mb-4">
+  <div class="w-full">
+    <div class="flex flex-col w-full justify-center items-center gap-2">
       <!-- <div class="flex flex-row gap-2 items-center">expand all <input type="checkbox" class="toggle" v-model="expanded" @change="expandedChanged($event)" /></div> -->
       <!-- <div class="tabs">
         <a class="tab tab-bordered" :class="{ 'tab-active': selectedCategory === 'all' }">All</a>

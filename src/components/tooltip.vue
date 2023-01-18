@@ -3,7 +3,7 @@
     <slot name="default"></slot>
     <template #content>
       <div class="box text-amber-50">
-        <div class="p-3 z-5 relative">
+        <div class="p-3 relative">
           <slot name="content"></slot>
         </div>
       </div>
@@ -33,7 +33,7 @@ import Popper from 'vue3-popper';
   content: '';
   position: absolute;
   inset: 0;
-  background: url('/images/header-bg.jpg') !important/* your background */;
+  background: url('/images/header-bg.jpg');
   -webkit-mask: var(--mask);
   mask: var(--mask);
 }
