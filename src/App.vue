@@ -5,7 +5,7 @@
     </div>
     <div class="container">
       <div class="flex w-full flex-row justify-center justify-items-center gap-8 p-4">
-        <div class="flex w-full flex-col gap-2 overflow-y-scroll">
+        <div class="pm-container flex w-full flex-col gap-2 overflow-y-scroll">
           <h1 class="font-semibold">Production methods</h1>
           <PmSelection></PmSelection>
         </div>
@@ -194,8 +194,8 @@ watch(selections, () => {
 onMounted(() => calculate()); // initial calculation
 </script>
 <style scoped>
-.container > div {
-  height: calc(100vh - 3.5rem);
+.container .pm-container {
+  height: calc(100vh - 5rem);
 }
 .header {
   background-image: url('/images/header-bg.jpg');
