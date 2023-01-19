@@ -1,56 +1,68 @@
 <template>
-  <div class="justify-center w-full flex flex-col items-center">
-    <div class="header w-full flex justify-center p-4">
-      <div class="w-2/3 flex justify-center text-yellow-50 font-bold opacity-90">Victoria 3 Production Calculator</div>
+  <div class="flex w-full flex-col items-center justify-center">
+    <div class="header flex w-full justify-center p-4">
+      <div class="flex w-2/3 justify-center font-bold text-yellow-50 opacity-90">Victoria 3 Production Calculator</div>
     </div>
-    <div class="flex flex-row w-full p-4">
-      <div class="flex flex-col gap-2 w-full">
-        <h1 class="font-semibold">Production methods</h1>
-        <PmSelection></PmSelection>
-      </div>
-      <div class="divider divider-horizontal"></div>
-      <div class="w-full flex flex-col">
-        <div class="flex flex-col gap-2">
-          <h1 class="font-semibold">Goods with multiple producer options</h1>
-          <MultipleProducerSelection></MultipleProducerSelection>
+    <div class="container">
+      <div class="flex w-full flex-row p-4">
+        <div class="flex w-full flex-col gap-2">
+          <h1 class="font-semibold">Production methods</h1>
+          <PmSelection></PmSelection>
         </div>
-        <div class="divider"></div>
-        <div v-if="error">
-          <div class="font-semibold">{{ error }}</div>
-        </div>
-        <div class="flex flex-col gap-2">
-          <h1 class="font-semibold">Select building and amount</h1>
-          <div class="w-full flex flex-row">
-            <BuildingSelection v-model="selection" />
-            <div class="w-full flex flex-col text-center gap-2">
-              <h1 class="font-semibold">Output</h1>
-              <GoodAmount v-if="outputGoods" :goods="outputGoods" :multiplier="selection.amount"></GoodAmount>
-            </div>
-            <div class="w-full flex flex-col text-center gap-2">
-              <h1 class="font-semibold">Input</h1>
-              <GoodAmount v-if="inputGoods" :goods="inputGoods" :multiplier="selection.amount"></GoodAmount>
-            </div>
+        <div class="divider divider-horizontal"></div>
+        <div class="flex w-full flex-col">
+          <div class="flex flex-col gap-2">
+            <h1 class="font-semibold">Goods with multiple producer options</h1>
+            <MultipleProducerSelection></MultipleProducerSelection>
+          </div>
+          <div class="divider"></div>
+          <div v-if="error">
+            <div class="font-semibold text-red-700">{{ error }}</div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <h1 class="font-semibold">Select building and amount</h1>
+            <TransitionGroup name="list" tag="div" @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" class="flex flex-col gap-2">
+              <div class="flex w-full flex-row" v-for="(item, index) in selections" :key="index">
+                <div class="flex flex-col gap-2">
+                  <BuildingSelection v-model="item.selection" @deleteClicked="deleteBuildingClicked" :no-delete="Object.keys(selections).length < 2" />
+                  <div v-if="index === selections.length - 1" class="flex w-full justify-center">
+                    <span class="cursor-pointer text-green-700 hover:opacity-70" @click="addBuilding">
+                      <Icon class="h-6 w-6" icon="material-symbols:add-circle-rounded" />
+                    </span>
+                  </div>
+                </div>
+                <div class="flex w-full flex-col gap-2 text-center">
+                  <h1 class="font-semibold">Output</h1>
+                  <GoodAmount :goods="outputGoods(item.selection.buildingType)" :multiplier="item.selection.amount"></GoodAmount>
+                </div>
+                <div class="flex w-full flex-col gap-2 text-center">
+                  <h1 class="font-semibold">Input</h1>
+                  <GoodAmount :goods="inputGoods(item.selection.buildingType)" :multiplier="item.selection.amount"></GoodAmount>
+                </div>
+              </div>
+            </TransitionGroup>
+          </div>
+          <div class="flex w-full flex-col justify-center gap-2 text-start">
+            <h1 class="font-semibold">Calculated buildings counts</h1>
+            <BuildingsAmount></BuildingsAmount>
           </div>
         </div>
-        <div class="flex w-full flex-col gap-2 text-start justify-center">
-          <h1 class="font-semibold">Calculated buildings counts</h1>
-          <BuildingsAmount></BuildingsAmount>
-        </div>
       </div>
     </div>
-    <div class="w-full flex flex-col text-no-wrap gap-2 justify-center text-white my-footer h-32 p-4">
+    <div class="text-no-wrap my-footer flex h-32 w-full flex-col justify-center gap-2 p-4 text-white">
       <div class="w-full text-center">
-        Disclaimer: all images displayed on the page are copyrighted by <a href="https://www.paradoxinteractive.com/" class="text-amber-800 hover:text-amber-500">Paradox Interactive</a>
+        Disclaimer: all images displayed on this page are copyrighted by <a href="https://www.paradoxinteractive.com/" class="text-amber-800 hover:text-amber-500">Paradox Interactive</a>
       </div>
       <div class="w-full text-center">
-        Favicon <img src="/favicon.ico" class="inline-block w-6" /> made by <a class="text-amber-800 hover:text-amber-500" href="https://www.steamgriddb.com/icon/24061" target="blank">TroyDaGamer</a>
+        Favicon <img src="/favicon.ico" class="inline-block w-6" /> made by
+        <a class="text-amber-800 hover:text-amber-500" href="https://www.steamgriddb.com/icon/24061" target="blank">TroyDaGamer</a>
       </div>
-      <div class="w-full flex flex-row items-center justify-center">
-        <div class="w-full flex gap-2 text-amber-800 hover:text-amber-500 justify-end">
+      <div class="flex w-full flex-row items-center justify-center">
+        <div class="flex w-full justify-end gap-2 text-amber-800 hover:text-amber-500">
           <a href="https://www.paradoxinteractive.com/games/victoria-3/about" target="blank">Victoria 3</a>
         </div>
         <div class="divider divider-horizontal gap-0"></div>
-        <div class="w-full flex gap-2 text-amber-800 hover:text-amber-500 justify-start">
+        <div class="flex w-full justify-start gap-2 text-amber-800 hover:text-amber-500">
           <a href="https://github.com/xZylote/vic3calc" target="blank">Github</a>
         </div>
       </div>
@@ -59,7 +71,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { Icon } from '@iconify/vue';
+import gsap from 'gsap';
+import { onMounted, reactive, ref, watch } from 'vue';
 
 import BuildingSelection from '@/components/building-selection.vue';
 import GoodAmount from '@/components/goods-amount.vue';
@@ -67,33 +81,70 @@ import MultipleProducerSelection from '@/components/multiple-producer-selection.
 import PmSelection from '@/components/pm-selection.vue';
 import { entries } from '@/utils';
 
-import { type GoodsProducerMap, Calculator } from './calculator';
+import { type BuildingSelectionMap, type CalculationResult, Calculator } from './calculator';
 import BuildingsAmount from './components/buildings-amount.vue';
 import { MULTIPLE_PRODUCER_PREFERENCE_LOCAL_STORAGE_KEY, PRODUCTION_METHOD_LOCAL_STORAGE_KEY } from './production-preferences';
 import { store } from './store';
-import type { GoodType, ProductionBuildingType } from './v3-data';
+import type { ProductionBuildingType } from './v3-data';
+import v3Data from './v3-data';
 
-const selection = ref({ amount: 100, buildingType: 'building_coal_mine' as ProductionBuildingType });
+const cachedSelections = localStorage.getItem('selections');
+const selections = reactive<{ selection: { buildingType: ProductionBuildingType; amount: number } }[]>(
+  cachedSelections
+    ? JSON.parse(cachedSelections)
+    : [
+        {
+          selection: {
+            buildingType: 'building_coal_mine' as ProductionBuildingType,
+            amount: 100,
+          },
+        },
+      ]
+);
 const error = ref('');
 
-const outputGoods = computed(() => {
-  const output = store.calculation.result[selection.value.buildingType]?.output;
-  let arr: { goodType: GoodType; amount: number }[] = [];
-  if (output) {
-    entries(output).forEach((entry) => {
-      if (entry && Array.isArray(entry) && entry.length === 2) {
-        arr.push({ goodType: entry[0], amount: entry[1].amount });
-      }
+function addBuilding() {
+  const selectedKeys = selections.map((item) => item.selection.buildingType);
+  const nextBuilding = entries(v3Data.buildings).find(([buildingType]) => !selectedKeys.includes(buildingType));
+  if (nextBuilding) {
+    selections.push({
+      selection: {
+        buildingType: nextBuilding[0],
+        amount: 100,
+      },
     });
   }
-  return arr;
-});
-const inputGoods = computed(() => {
-  const map = store.calculation.result[selection.value.buildingType];
-  return entries(map?.input || ({} as GoodsProducerMap['input'])).map(([goodType, { amount }]) => {
-    return { goodType, amount };
-  });
-});
+}
+
+function deleteBuildingClicked(selection: { buildingType: ProductionBuildingType }) {
+  if (Object.keys(selections).length === 1) {
+    return;
+  }
+  const index = selections.findIndex((item) => item.selection.buildingType === selection.buildingType);
+  if (index !== -1) {
+    selections.splice(index, 1);
+  }
+}
+
+function outputGoods(buildingType: ProductionBuildingType) {
+  if (!store.calculation.result[buildingType]?.output) {
+    return [];
+  }
+  const output = entries(store.calculation.result[buildingType]!.output)
+    .filter(Boolean)
+    .map(([goodType, { amount }]) => ({ goodType, amount }));
+  return output;
+}
+
+function inputGoods(buildingType: ProductionBuildingType) {
+  if (!store.calculation.result[buildingType]?.output) {
+    return [];
+  }
+  const input = entries(store.calculation.result[buildingType]!.input)
+    .filter(Boolean)
+    .map(([goodType, { amount }]) => ({ goodType, amount }));
+  return input;
+}
 
 watch(store.productionPreferences, () => {
   // cache production preferences
@@ -108,17 +159,43 @@ watch(store.multipleProducerPreferences, () => {
 
 function calculate() {
   try {
-    const ret = Calculator.calculate([selection.value]);
-    store.setCalculation(ret);
+    const selectionMap = selections.reduce((acc, { selection }) => {
+      acc[selection.buildingType] = selection.amount;
+      return acc;
+    }, {} as BuildingSelectionMap);
+    store.setCalculation(Calculator.calculate(selectionMap));
     error.value = '';
-    return ret;
   } catch (e: any) {
     // eslint-disable-next-line vue/no-side-effects-in-computed-properties
     error.value = e.message;
     console.error(e);
+    store.setCalculation({ selection: {}, result: {} } as CalculationResult);
   }
 }
-watch(selection, () => calculate());
+function onBeforeEnter(el: any) {
+  el.style.opacity = 0;
+  el.style.height = 0;
+}
+function onEnter(el: any, done: any) {
+  gsap.to(el, {
+    opacity: 1,
+    height: 'auto',
+    delay: el.dataset.index * 0.15,
+    onComplete: done,
+  });
+}
+function onLeave(el: any, done: any) {
+  gsap.to(el, {
+    opacity: 0,
+    height: 0,
+    delay: el.dataset.index * 0.15,
+    onComplete: done,
+  });
+}
+watch(selections, () => {
+  calculate();
+  localStorage.setItem('selections', JSON.stringify(selections));
+});
 onMounted(() => calculate()); // initial calculation
 </script>
 <style scoped>

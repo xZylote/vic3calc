@@ -6,7 +6,7 @@
     </div>
     <template #content>
       <div class="font-semibold">{{ building.humanizedName }}</div>
-      <div class="text-sm flex flex-col" v-if="store.calculation.result?.[building.name]">
+      <div class="flex flex-col text-sm" v-if="store.calculation.result?.[building.name]">
         <div v-for="(value, goodType) in store.calculation.result[building.name]?.output" :key="goodType">
           <div class="flex">
             <img :src="v3Data['goods'][goodType].texture25" />:

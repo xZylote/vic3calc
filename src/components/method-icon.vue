@@ -1,9 +1,11 @@
 <template>
   <Tooltip hover :arrow="false" :open-delay="0" placement="right">
-    <img :src="`${(method[('texture' + (size || 40)) as keyof ProductionMethod])}`" class="method-icon" :class="{ active: props.active }" />
+    <span :class="[active ? 'active hover:opacity-70' : 'hover:opacity-50', props.class].filter(Boolean).join(' ')">
+      <img :src="`${(method[('texture' + (size || 40)) as keyof ProductionMethod])}`" class="method-icon" :class="{ active }" />
+    </span>
     <template #content>
       <div class="font-bold">{{ props.method.humanizedName }}</div>
-      <div class="text-sm flex flex-col">
+      <div class="flex flex-col text-sm">
         <h3>Modifiers</h3>
         <div class="ml-2">
           <p>production:</p>
@@ -47,6 +49,11 @@ const props = defineProps({
     type: Number as PropType<25 | 32 | 40 | 64>,
     required: false,
     default: 40,
+  },
+  class: {
+    type: String,
+    required: false,
+    default: '',
   },
 });
 

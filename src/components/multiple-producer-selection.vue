@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-wrap">
-    <div class="flex items-center gap-0 w-28" v-for="[goodType, multipleProducer] in entries(store.multipleProducerPreferences)" :key="goodType" @mouseleave="expanded[goodType] = false">
+    <div class="flex w-28 items-center gap-0" v-for="[goodType, multipleProducer] in entries(store.multipleProducerPreferences)" :key="goodType" @mouseleave="expanded[goodType] = false">
       <div class="flex flex-col">
         <TransitionGroup name="list" tag="div" @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" class="m-1">
           <div

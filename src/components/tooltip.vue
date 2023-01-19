@@ -3,7 +3,7 @@
     <slot name="default"></slot>
     <template #content>
       <div class="box text-amber-50">
-        <div class="p-3 relative">
+        <div class="relative p-3">
           <slot name="content"></slot>
         </div>
       </div>

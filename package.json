@@ -7,13 +7,12 @@
     "dev": "vite",
     "build": "run-p type-check build-only",
     "preview": "vite preview",
+    "prod-preview": "rm -rf dist/ && npm run build && npx http-server dist",
     "build-only": "vite build",
     "type-check": "vue-tsc --noEmit",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
     "convert-gfx": "bash scripts/convert-gfx.sh",
     "parse-assets": "node ./scripts/parse-vic3-assets.js"
-  },
-  "dependencies": {
   },
   "devDependencies": {
     "@iconify/vue": "^4.0.2",
@@ -34,11 +33,12 @@
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.21",
     "prettier": "^2.7.1",
+    "prettier-plugin-tailwindcss": "^0.2.1",
     "tailwindcss": "^3.2.4",
     "typescript": "~4.7.4",
     "vite": "^4.0.0",
-    "vue-tsc": "^1.0.12",
     "vue": "^3.2.45",
+    "vue-tsc": "^1.0.12",
     "vue3-popper": "^1.5.0"
   }
 }

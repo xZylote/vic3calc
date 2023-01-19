@@ -1,7 +1,7 @@
 <template>
   <Tooltip hover :arrow="false" :open-delay="0" placement="right">
     <!-- img should not be resizable -->
-    <div style="height: max-content; width: max-content">
+    <div style="height: max-content; width: max-content" :class="props.class">
       <img :src="`${good[('texture' + (size || 25)) as keyof typeof v3Data['goods'][GoodType]]}`" class="building-icon" :class="{ active }" />
     </div>
     <template #content>
@@ -17,7 +17,7 @@ import v3Data, { type Good, type GoodType } from '@/v3-data';
 
 import Tooltip from './tooltip.vue';
 
-defineProps({
+const props = defineProps({
   good: {
     type: Object as PropType<Good>,
     required: true,
@@ -30,6 +30,11 @@ defineProps({
     type: Boolean,
     required: false,
     default: true,
+  },
+  class: {
+    type: String,
+    required: false,
+    default: '',
   },
 });
 </script>

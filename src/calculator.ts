@@ -3,19 +3,16 @@ import { entries } from './utils';
 import type { EmploymentType, Good, GoodType, ProductionBuildingType } from './v3-data';
 import v3Data from './v3-data';
 
-export type BuildingSelection = { buildingType: ProductionBuildingType; amount: number };
-export type GoodsBalance = {
-  input: Record<GoodType, number>;
-  output: Record<GoodType, number>;
-  employment: Record<EmploymentType, number>;
-};
+export type BuildingSelectionMap = { [buildingType in ProductionBuildingType]: number };
+
 export type ProductionRequirement = {
   buildingType: ProductionBuildingType;
   goodType: GoodType; // for debugging
   goodsAmount: number; // for debugging
   buildingCount: number;
 };
-export type GoodsProducerMap = {
+
+export type ProductionBuildingData = {
   input: Record<GoodType, { amount: number; producedBy: ProductionBuildingType; buildingsNeeded?: number }>;
   output: Record<GoodType, { amount: number; producedBy: ProductionBuildingType }>;
   employment: Record<EmploymentType, { amount: number }>;
@@ -25,9 +22,11 @@ export type GoodsProducerMap = {
   totalBuildingsNeeded: number;
 };
 
+export type SupplyChain = { [buildingType in ProductionBuildingType]?: ProductionBuildingData };
+
 export type CalculationResult = {
-  selection: BuildingSelection[];
-  result: { [buildingType in ProductionBuildingType]?: GoodsProducerMap };
+  selection: BuildingSelectionMap;
+  result: SupplyChain;
 };
 
 export type MultipleProducerPreference = {
@@ -51,7 +50,7 @@ export class Calculator {
     return producer;
   }
 
-  private static calculateBuildingGoodBalance(buildingType: ProductionBuildingType): GoodsProducerMap {
+  private static createProductionBuildingData(buildingType: ProductionBuildingType): ProductionBuildingData {
     // get the balances for the selection
     const selectionBuildingPreferences = entries(store.productionPreferences[buildingType]).map(([groupType, methodType]) => {
       const group = v3Data.production_method_groups[groupType];
@@ -68,7 +67,7 @@ export class Calculator {
       };
     });
 
-    const selectionGoods: GoodsProducerMap = selectionBuildingPreferences.reduce(
+    const selectionGoods: ProductionBuildingData = selectionBuildingPreferences.reduce(
       (goods, { method }) => {
         if (method.parsed_modifiers) {
           goods.input = Object.assign(
@@ -95,79 +94,86 @@ export class Calculator {
         return goods;
       },
       {
-        input: {} as GoodsProducerMap['input'],
-        output: {} as GoodsProducerMap['output'],
-        employment: {} as GoodsProducerMap['employment'],
-        productionRequirements: {} as GoodsProducerMap['productionRequirements'],
+        input: {} as ProductionBuildingData['input'],
+        output: {} as ProductionBuildingData['output'],
+        employment: {} as ProductionBuildingData['employment'],
+        productionRequirements: {} as ProductionBuildingData['productionRequirements'],
         totalBuildingsNeeded: 0,
       }
     );
     return selectionGoods;
   }
 
-  private static createProducerMap(producers: { [buildingType in ProductionBuildingType]?: GoodsProducerMap }, depth: number = 0) {
+  /**
+   * Generates a blank supply chain recursively
+   */
+  private static generateSupplyChainRecursive(supplyChain: SupplyChain, depth: number = 0): SupplyChain {
     if (depth > 10) {
       throw new Error('Too many recursive calls');
     }
     // find all of the input producers
     const inputProducerBuildingTypes: ProductionBuildingType[] = Array.from(
       new Set(
-        entries(producers) // using set to remove duplicates
+        entries(supplyChain) // using set to remove duplicates
           .flatMap(([, producer]) => entries(producer.input).map(([, { producedBy }]) => producedBy))
       )
     );
 
-    const newProducers: ProductionBuildingType[] = inputProducerBuildingTypes.filter((buildingType) => !producers[buildingType]);
+    const newProducers: ProductionBuildingType[] = inputProducerBuildingTypes.filter((buildingType) => !supplyChain[buildingType]);
     for (const buildingType of newProducers) {
-      producers[buildingType] = Calculator.calculateBuildingGoodBalance(buildingType);
+      supplyChain[buildingType] = Calculator.createProductionBuildingData(buildingType);
     }
     if (newProducers.length > 0) {
-      Calculator.createProducerMap(producers, depth + 1);
+      Calculator.generateSupplyChainRecursive(supplyChain, depth + 1);
     }
+    return supplyChain;
   }
 
+  /**
+   * Add requirements for the buildings that produce the input goods
+   */
   private static generateProductionRequirementsForBuilding({
-    producerMap,
+    supplyChain,
     buildingType,
     requesterBuildingCount: requesterBuildingCount,
   }: {
-    producerMap: { [buildingType in ProductionBuildingType]?: GoodsProducerMap };
+    supplyChain: SupplyChain;
     buildingType: ProductionBuildingType;
     requesterBuildingCount: number;
   }): ProductionRequirement[] {
     const requirements: ProductionRequirement[] = [];
-    const building = producerMap[buildingType];
+    const building = supplyChain[buildingType];
     if (!building) {
-      throw new Error(`Could not find producer map for building ${buildingType}`);
+      throw new Error(`Could not find producerData for building ${buildingType}`);
     }
     entries(building.input).forEach(([goodType, inputBalance]) => {
-      const producer = producerMap[inputBalance.producedBy];
-      if (!producer || !producer.productionRequirements) {
-        throw new Error(`Could not find producer map for building ${inputBalance.producedBy}`);
+      const producerData = supplyChain[inputBalance.producedBy];
+      if (!producerData || !producerData.productionRequirements) {
+        throw new Error(`Could not find producerData for building ${inputBalance.producedBy}`);
       }
-      if (!producer.productionRequirements[buildingType]) {
-        producer.productionRequirements[buildingType] = [];
+      if (!producerData.productionRequirements[buildingType]) {
+        producerData.productionRequirements[buildingType] = [];
       }
-      if (producer.productionRequirements[buildingType]!.length === undefined) {
+      if (producerData.productionRequirements[buildingType]!.length === undefined) {
         throw new Error(`Invalid productionRequirements for building ${inputBalance.producedBy}`);
       }
-      if (!producer.output[goodType]) {
+      if (!producerData.output[goodType]) {
         throw new Error(`Could not find a producer for "${goodType}" for ${v3Data.buildings[buildingType].humanizedName}. Change your production preferences to fix this.`);
       }
-      const requirement = {
+      const requirement: ProductionRequirement = {
         buildingType: inputBalance.producedBy,
         goodType: goodType,
         goodsAmount: inputBalance.amount,
-        buildingCount: (inputBalance.amount / producer.output[goodType].amount) * requesterBuildingCount,
+        buildingCount: (inputBalance.amount / producerData.output[goodType].amount) * requesterBuildingCount,
       };
-      producer.productionRequirements[buildingType]!.push(requirement);
+      producerData.productionRequirements[buildingType]!.push(requirement);
       requirements.push(requirement);
     });
     return requirements;
   }
 
   /**
-   * Round by round calculate the production input requirements for each of the input goods.
+   * Round by round calculate the supply chain input requirements for each of the input goods.
    * Because there can be co-dependent goods in the production pipeline eg coal -> tools -> coal, then we need
    * to calculate the production requirements for each round and limit the number of rounds.
    * "requesterBuildingCount" is the number of buildings of the good requester:
@@ -181,33 +187,32 @@ export class Calculator {
    * and they're nearing 0 so rapidly that at the end of 10 rounds we can assume that the requesterBuildingCount is nearly 0
    * and the production input requirements do no change much after that.
    */
-  private static calculateProductionRequirements({
-    producerMap,
+  private static calculateSupplyChainRequirements({
+    supplyChain,
     buildingType,
     requesterBuildingCount,
   }: {
-    producerMap: { [buildingType in ProductionBuildingType]?: GoodsProducerMap };
+    supplyChain: SupplyChain;
     buildingType: ProductionBuildingType;
     requesterBuildingCount: number;
   }) {
     // calculate the production requirements for the initial building
     let roundRequirements = Calculator.generateProductionRequirementsForBuilding({
-      producerMap,
+      supplyChain: supplyChain,
       buildingType,
       requesterBuildingCount,
     });
-
     for (let i = 0; i < GOOD_REQUIREMENT_ROUNDS; ++i) {
-      roundRequirements = roundRequirements.flatMap((requirement) =>
-        Calculator.generateProductionRequirementsForBuilding({
-          producerMap,
+      roundRequirements = roundRequirements.flatMap((requirement) => {
+        return Calculator.generateProductionRequirementsForBuilding({
+          supplyChain: supplyChain,
           buildingType: requirement.buildingType,
           requesterBuildingCount: requirement.buildingCount,
-        })
-      );
+        });
+      });
     }
     // calculate the building count for each building
-    entries(producerMap).forEach(([, producer]) => {
+    entries(supplyChain).forEach(([, producer]) => {
       producer.totalBuildingsNeeded = 0;
       entries(producer.productionRequirements).forEach(([, requirements]) => {
         requirements.forEach((requirement) => {
@@ -217,28 +222,57 @@ export class Calculator {
     });
   }
 
-  public static calculate(selection: BuildingSelection[]): CalculationResult {
-    if (selection.length === 0) {
-      throw new Error('No buildings selected');
-    }
-    const singleSelectedBuilding: BuildingSelection = selection[0] as BuildingSelection;
-    const mainSelectionBalance = Calculator.calculateBuildingGoodBalance(singleSelectedBuilding.buildingType);
-    const producerMap: { [buildingType in ProductionBuildingType]?: GoodsProducerMap } = { [singleSelectedBuilding.buildingType]: mainSelectionBalance };
-    Calculator.createProducerMap(producerMap, 0);
-    Calculator.calculateProductionRequirements({
-      producerMap,
+  private static calculateOne(singleSelectedBuilding: { buildingType: ProductionBuildingType; amount: number }) {
+    const supplyChain: SupplyChain = Calculator.generateSupplyChainRecursive({
+      [singleSelectedBuilding.buildingType]: Calculator.createProductionBuildingData(singleSelectedBuilding.buildingType),
+    });
+    Calculator.calculateSupplyChainRequirements({
+      supplyChain: supplyChain,
       buildingType: singleSelectedBuilding.buildingType,
       requesterBuildingCount: singleSelectedBuilding.amount,
     });
     // add the selection buildings to the result
-    selection.forEach((building) => {
-      if (producerMap[building.buildingType]) {
-        producerMap[building.buildingType]!.totalBuildingsNeeded = (producerMap[building.buildingType]!.totalBuildingsNeeded ?? 0) + (building.amount ?? 0);
-      }
-    });
-    return {
+    if (supplyChain[singleSelectedBuilding.buildingType]) {
+      supplyChain[singleSelectedBuilding.buildingType]!.totalBuildingsNeeded = (supplyChain[singleSelectedBuilding.buildingType]!.totalBuildingsNeeded ?? 0) + (singleSelectedBuilding.amount ?? 0);
+    }
+    return supplyChain;
+  }
+
+  public static calculate(selectionMap: BuildingSelectionMap): CalculationResult {
+    const selections = entries(selectionMap).map(([buildingType, amount]) => ({ buildingType, amount }));
+    if (selections.length === 0) {
+      throw new Error('No buildings selected');
+    }
+    const results = selections.map((selection) => ({
       selection,
-      result: producerMap,
-    };
+      result: Calculator.calculateOne(selection),
+    }));
+    const mergedResult = results.reduce(
+      (merged, result) => {
+        entries(result.result).forEach(([buildingType, producerData]) => {
+          if (!merged.result[buildingType]) {
+            merged.result[buildingType] = {
+              input: {} as ProductionBuildingData['input'],
+              output: {} as ProductionBuildingData['output'],
+              employment: {} as ProductionBuildingData['employment'],
+              productionRequirements: {} as ProductionBuildingData['productionRequirements'],
+              totalBuildingsNeeded: 0,
+            };
+          }
+          const productionBuildingData: ProductionBuildingData = {
+            input: Object.assign({}, merged.result[buildingType]!.input, producerData.input),
+            output: Object.assign({}, merged.result[buildingType]!.output, producerData.output),
+            employment: Object.assign({}, merged.result[buildingType]!.employment, producerData.employment),
+            productionRequirements: {} as ProductionBuildingData['productionRequirements'], // not needed in the result
+            totalBuildingsNeeded: (merged.result[buildingType]!.totalBuildingsNeeded ?? 0) + (producerData.totalBuildingsNeeded ?? 0),
+          };
+          merged.result[buildingType] = productionBuildingData;
+        });
+        return merged;
+      },
+      { selection: selectionMap, result: {} as SupplyChain }
+    );
+
+    return mergedResult;
   }
 }
