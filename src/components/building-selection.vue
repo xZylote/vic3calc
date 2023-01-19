@@ -1,6 +1,11 @@
 <template>
   <div class="flex w-full flex-col items-center justify-center gap-2">
-    <div class="flex w-fit items-center gap-2">
+    <div class="indicator flex w-fit items-center gap-2">
+      <span class="indicator-start indicator-item">
+        <span v-if="!noDelete" @click="!noDelete && emit('deleteClicked', props.modelValue)" :class="{ 'cursor-pointer hover:opacity-70': !noDelete }">
+          <Icon class="h-6 w-6" icon="ic:baseline-remove-circle" />
+        </span>
+      </span>
       <BuildingIcon :building="v3Data.buildings[props.modelValue.buildingType]" :size="40" />
       <select class="select-bordered select bg-amber-50" :value="props.modelValue.buildingType" @input="buildingChanged">
         <optgroup label="Urban">
@@ -14,9 +19,6 @@
           </option>
         </optgroup>
       </select>
-      <span @click="!noDelete && emit('deleteClicked', props.modelValue)" :class="{ 'opacity-20': noDelete, 'cursor-pointer hover:opacity-70': !noDelete }">
-        <Icon class="h-6 w-6" icon="ic:baseline-remove-circle" />
-      </span>
     </div>
     <div class="flex w-full items-center gap-2">
       <div class="w-full">

@@ -272,7 +272,6 @@ export class Calculator {
       },
       { selection: selectionMap, result: {} as SupplyChain }
     );
-
     return mergedResult;
   }
 }

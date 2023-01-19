@@ -3,7 +3,7 @@
     <div class="flex flex-row items-center gap-1" v-for="[buildingType, producer] in resultsSorted" :key="buildingType">
       <BuildingIcon :building="v3Data.buildings[buildingType]" :size="32" />
       <div class="flex w-20 justify-start">
-        <div class="badge-outline badge flex flex-row whitespace-nowrap bg-amber-50">x {{ formatBuildingAmount(producer) }}</div>
+        <div class="kbd flex flex-row whitespace-nowrap bg-amber-50">x {{ formatBuildingAmount(producer) }}</div>
       </div>
     </div>
   </div>

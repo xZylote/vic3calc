@@ -16,8 +16,8 @@
             <MultipleProducerSelection></MultipleProducerSelection>
           </div>
           <div class="divider"></div>
-          <div v-if="error">
-            <div class="font-semibold text-red-700">{{ error }}</div>
+          <div v-if="error" class="alert alert-error">
+            <div class="font-semibold">{{ error }}</div>
           </div>
           <div class="flex flex-col gap-2">
             <h1 class="font-semibold">Select building and amount</h1>
@@ -52,10 +52,6 @@
     <div class="text-no-wrap my-footer flex h-32 w-full flex-col justify-center gap-2 p-4 text-white">
       <div class="w-full text-center">
         Disclaimer: all images displayed on this page are copyrighted by <a href="https://www.paradoxinteractive.com/" class="text-amber-800 hover:text-amber-500">Paradox Interactive</a>
-      </div>
-      <div class="w-full text-center">
-        Favicon <img src="/favicon.ico" class="inline-block w-6" /> made by
-        <a class="text-amber-800 hover:text-amber-500" href="https://www.steamgriddb.com/icon/24061" target="blank">TroyDaGamer</a>
       </div>
       <div class="flex w-full flex-row items-center justify-center">
         <div class="flex w-full justify-end gap-2 text-amber-800 hover:text-amber-500">
