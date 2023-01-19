@@ -4,12 +4,11 @@
       <div class="flex w-2/3 justify-center font-bold text-yellow-50 opacity-90">Victoria 3 Production Calculator</div>
     </div>
     <div class="container">
-      <div class="flex w-full flex-row p-4">
+      <div class="flex w-full flex-row justify-center justify-items-center gap-8 p-4">
         <div class="flex w-full flex-col gap-2 overflow-y-scroll">
           <h1 class="font-semibold">Production methods</h1>
           <PmSelection></PmSelection>
         </div>
-        <div class="divider divider-horizontal"></div>
         <div class="flex w-full flex-col">
           <div class="flex flex-col gap-2">
             <h1 class="font-semibold">Goods with multiple producer options</h1>
