@@ -1,11 +1,11 @@
 <template>
   <div class="flex w-full flex-col items-center justify-center">
-    <div class="header flex w-full justify-center p-4">
+    <div class="header flex h-14 w-full justify-center p-4">
       <div class="flex w-2/3 justify-center font-bold text-yellow-50 opacity-90">Victoria 3 Production Calculator</div>
     </div>
     <div class="container">
       <div class="flex w-full flex-row p-4">
-        <div class="flex w-full flex-col gap-2">
+        <div class="flex w-full flex-col gap-2 overflow-y-scroll">
           <h1 class="font-semibold">Production methods</h1>
           <PmSelection></PmSelection>
         </div>
@@ -195,6 +195,9 @@ watch(selections, () => {
 onMounted(() => calculate()); // initial calculation
 </script>
 <style scoped>
+.container > div {
+  height: calc(100vh - 3.5rem);
+}
 .header {
   background-image: url('/images/header-bg.jpg');
 }

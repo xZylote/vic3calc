@@ -1,13 +1,5 @@
 <template>
-  <div class="w-full">
-    <div class="flex w-full flex-col items-center justify-center gap-2">
-      <!-- <div class="flex flex-row gap-2 items-center">expand all <input type="checkbox" class="toggle" v-model="expanded" @change="expandedChanged($event)" /></div> -->
-      <!-- <div class="tabs">
-        <a class="tab tab-bordered" :class="{ 'tab-active': selectedCategory === 'all' }">All</a>
-        <a class="tab tab-bordered" :class="{ 'tab-active': selectedCategory === 'one' }">Tab 2</a>
-        <a class="tab tab-bordered" :class="{ 'tab-active': selectedCategory === 'two' }">Tab 3</a>
-      </div> -->
-    </div>
+  <div class="flex w-full flex-col gap-2">
     <div v-for="[buildingType, building] in buildingListInOrder" :key="buildingType" class="flex flex-row gap-2">
       <div class="flex w-2/5 flex-col items-center gap-2 text-sm">
         <div class="w-full text-center font-semibold">{{ building.humanizedName }}</div>
