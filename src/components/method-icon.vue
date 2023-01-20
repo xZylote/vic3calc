@@ -1,7 +1,7 @@
 <template>
   <Tooltip hover :arrow="false" :open-delay="0" placement="right">
     <span :class="[active ? 'active hover:opacity-70' : 'hover:opacity-50', props.class].filter(Boolean).join(' ')">
-      <img :src="`${(method[('texture' + (size || 40)) as keyof ProductionMethod])}`" class="method-icon" :class="{ active }" />
+      <img :src="`${(method[('texture' + (size || 40)) as keyof ProductionMethod])}`" :alt="method.humanizedName" class="method-icon" :class="{ active }" />
     </span>
     <template #content>
       <div class="font-bold">{{ props.method.humanizedName }}</div>
@@ -9,17 +9,17 @@
         <h3>Modifiers</h3>
         <div class="ml-2">
           <p>production:</p>
-          <div v-for="[modifierType, value] in Object.entries(props.method.building_modifiers.workforce_scaled).filter(([key]) => key.startsWith('building_output'))" :key="modifierType">
+          <div v-for="good of outputGoods" :key="good.name">
             <div class="flex">
-              <img :src="getModifierIconUrl(modifierType)" />:
-              <p class="ml-2" :class="{ 'text-green-500': value > 0, 'text-red-500': value < 0 }">{{ (value > 0 ? '+' : '') + value }}</p>
+              <img :src="good.texture25" :alt="good.humanizedName" />:
+              <p class="ml-2" :class="{ 'text-green-500': good.value > 0, 'text-red-500': good.value < 0 }">{{ (good.value > 0 ? '+' : '') + good.value }}</p>
             </div>
           </div>
           <p>consumption:</p>
-          <div v-for="[modifierType, value] in Object.entries(props.method.building_modifiers.workforce_scaled).filter(([key]) => key.startsWith('building_input'))" :key="modifierType">
+          <div v-for="good of inputGoods" :key="good.name">
             <div class="flex">
-              <img :src="getModifierIconUrl(modifierType)" />:
-              <p class="ml-2" :class="{ 'text-red-500': value > 0, 'text-green-500': value < 0 }">{{ (value > 0 ? '+' : '') + value }}</p>
+              <img :src="good.texture25" :alt="good.humanizedName" />:
+              <p class="ml-2" :class="{ 'text-red-500': good.value > 0, 'text-green-500': good.value < 0 }">{{ (good.value > 0 ? '+' : '') + good.value }}</p>
             </div>
           </div>
         </div>
@@ -28,9 +28,9 @@
   </Tooltip>
 </template>
 <script setup lang="ts">
-import type { PropType } from 'vue';
+import { type PropType, computed } from 'vue';
 
-import type { ProductionMethod } from '@/v3-data';
+import type { Good, ProductionMethod } from '@/v3-data';
 import v3Data from '@/v3-data';
 
 import Tooltip from './tooltip.vue';
@@ -57,19 +57,45 @@ const props = defineProps({
   },
 });
 
-function getModifierIconUrl(modifierType: string) {
+const outputGoods = computed(() => {
+  return Object.entries(props.method.building_modifiers.workforce_scaled)
+    .filter(([key]) => key.startsWith('building_output'))
+    .map(([modifierType, value]) => {
+      const good = getGoodFromModifierType(modifierType);
+      if (good) {
+        return {
+          ...good,
+          value,
+        };
+      }
+    })
+    .filter(Boolean) as (Good & { value: number })[];
+});
+
+const inputGoods = computed(() => {
+  return Object.entries(props.method.building_modifiers.workforce_scaled)
+    .filter(([key]) => key.startsWith('building_input'))
+    .map(([modifierType, value]) => {
+      const good = getGoodFromModifierType(modifierType);
+      if (good) {
+        return {
+          ...good,
+          value,
+        };
+      }
+    })
+    .filter(Boolean) as (Good & { value: number })[];
+});
+
+function getGoodFromModifierType(modifierType: string) {
   const inputOutput = modifierType.replace(/_add/g, ' ');
-  let good = '';
-  // let employment = '';
+  let good;
   if (inputOutput.startsWith('building_input_')) {
     good = inputOutput.replace('building_input_', '').trim();
   } else if (inputOutput.startsWith('building_output_')) {
     good = inputOutput.replace('building_output_', '').trim();
-  } else if (inputOutput.startsWith('building_employment_')) {
-    // employment = inputOutput.replace('building_employment_', '').trim();
   }
-  const texture = good ? v3Data['goods'][good as keyof (typeof v3Data)['goods']].texture25 : '';
-  return texture;
+  return good ? v3Data['goods'][good as keyof (typeof v3Data)['goods']] : undefined;
 }
 </script>
 <style scoped>

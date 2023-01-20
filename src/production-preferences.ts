@@ -15,6 +15,17 @@ export type ProductionPreferences<
   };
 };
 
+export type BuildingInputOutputMap = {
+  [building in ProductionBuildingType]: {
+    input: {
+      [goodType in GoodType]: number;
+    };
+    output: {
+      [goodType in GoodType]: number;
+    };
+  };
+};
+
 export const PRODUCTION_METHOD_LOCAL_STORAGE_KEY = 'production_method_preferences';
 export const MULTIPLE_PRODUCER_PREFERENCE_LOCAL_STORAGE_KEY = 'multiple_producer_preferences';
 
@@ -41,7 +52,7 @@ export function generatePreferenceMap(): ProductionPreferences {
   return preferences as ProductionPreferences;
 }
 
-export function multipleProducerPreferenceMap(): MultipleProducerPreference {
+export function generateMultipleProducerPreferenceMap(): MultipleProducerPreference {
   const savedPreferences = localStorage.getItem(MULTIPLE_PRODUCER_PREFERENCE_LOCAL_STORAGE_KEY);
   if (savedPreferences) {
     return JSON.parse(savedPreferences);
@@ -87,4 +98,27 @@ export function multipleProducerPreferenceMap(): MultipleProducerPreference {
     }
   });
   return multipleProducerMap;
+}
+
+export function generateBuildingInputOutputMap(preferences: ProductionPreferences) {
+  return entries(preferences).reduce((outerAcc, [buildingType, groupMap]) => {
+    if (!outerAcc[buildingType]) {
+      outerAcc[buildingType] = { input: {}, output: {} } as BuildingInputOutputMap[ProductionBuildingType];
+    }
+    // fill the input map
+    entries(groupMap).reduce((acc, [, methodType]) => {
+      v3Data.production_methods[methodType].parsed_modifiers.inputs.forEach(({ good, amount }) => {
+        acc.input[good] = (acc.input[good] ?? 0) + amount;
+      });
+      return acc;
+    }, outerAcc[buildingType]);
+    // fill the output map
+    entries(groupMap).reduce((acc, [, methodType]) => {
+      v3Data.production_methods[methodType].parsed_modifiers.outputs.forEach(({ good, amount }) => {
+        acc.output[good] = (acc.output[good] ?? 0) + amount;
+      });
+      return acc;
+    }, outerAcc[buildingType]);
+    return outerAcc;
+  }, {} as BuildingInputOutputMap);
 }

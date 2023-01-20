@@ -2,7 +2,7 @@
   <Tooltip hover :arrow="false" :open-delay="0" placement="right">
     <!-- img should not be resizable -->
     <div style="height: max-content; width: max-content" :class="props.class">
-      <img :src="`${good[('texture' + (size || 25)) as keyof typeof v3Data['goods'][GoodType]]}`" class="building-icon" :class="{ active }" />
+      <img :src="`${good[('texture' + (size || 25)) as keyof typeof v3Data['goods'][GoodType]]}`" :alt="good.humanizedName" class="building-icon" :class="{ active }" />
     </div>
     <template #content>
       <div class="font-semibold">{{ good.humanizedName }}</div>

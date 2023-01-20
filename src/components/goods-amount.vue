@@ -4,9 +4,11 @@
       <!--  -->
       <Tooltip>
         <div class="flex flex-row items-center gap-1">
-          <div class="flex justify-end justify-items-end"><img :src="v3Data.goods[goodType]?.texture32" /></div>
+          <div class="flex justify-end justify-items-end">
+            <img :src="v3Data.goods[goodType]?.texture40" :alt="v3Data['goods'][goodType].humanizedName" />
+          </div>
           <div class="flex justify-start">
-            <span class="kbd bg-amber-50">x {{ amount * multiplier }}</span>
+            <span class="kbd bg-amber-50 bg-opacity-50">x {{ amount * multiplier }}</span>
           </div>
         </div>
         <template #content>

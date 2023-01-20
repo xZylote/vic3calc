@@ -1,5 +1,5 @@
 <template>
-  <Popper hover :arrow="false" :open-delay="0" placement="right">
+  <Popper hover :arrow="false" :open-delay="0" placement="right" :disabled="disabled">
     <slot name="default"></slot>
     <template #content>
       <div class="box text-amber-50">
@@ -13,6 +13,14 @@
 
 <script setup lang="ts">
 import Popper from 'vue3-popper';
+
+defineProps({
+  disabled: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+});
 </script>
 <style scoped>
 :deep(.popper) {

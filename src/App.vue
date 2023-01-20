@@ -1,25 +1,29 @@
 <template>
   <div class="flex w-full flex-col items-center justify-center">
     <div class="header flex h-14 w-full justify-center p-4">
-      <div class="flex w-2/3 justify-center font-bold text-yellow-50 opacity-90">Victoria 3 Production Calculator</div>
+      <div class="flex w-2/3 justify-center font-bold text-yellow-50 opacity-90">
+        <h1>Victoria 3 Production Calculator</h1>
+      </div>
     </div>
-    <div class="container">
+    <div class="">
       <div class="flex w-full flex-row justify-center justify-items-center gap-8 p-4">
-        <div class="pm-container flex w-full flex-col gap-2 overflow-y-scroll">
-          <h1 class="font-semibold">Production methods</h1>
-          <PmSelection></PmSelection>
-        </div>
-        <div class="flex w-full flex-col">
+        <div class="pm-container flex w-full flex-col overflow-y-scroll">
           <div class="flex flex-col gap-2">
-            <h1 class="font-semibold">Goods with multiple producer options</h1>
+            <h3 class="font-semibold">Goods with multiple producer options</h3>
             <MultipleProducerSelection></MultipleProducerSelection>
           </div>
-          <div class="divider"></div>
+          <div class="divider pr-8"></div>
+          <div class="flex flex-col gap-2">
+            <h3 class="font-semibold">Production groups and methods</h3>
+            <PmSelection></PmSelection>
+          </div>
+        </div>
+        <div class="flex w-full flex-col">
           <div v-if="error" class="alert alert-error">
             <div class="font-semibold">{{ error }}</div>
           </div>
           <div class="flex flex-col gap-2">
-            <h1 class="font-semibold">Select building and amount</h1>
+            <h3 class="font-semibold">Select building and amount</h3>
             <TransitionGroup name="list" tag="div" @before-enter="onBeforeEnter" @enter="onEnter" @leave="onLeave" class="flex flex-col gap-2">
               <div class="flex w-full flex-row" v-for="(item, index) in selections" :key="index">
                 <div class="flex flex-col gap-2">
@@ -31,18 +35,19 @@
                   </div>
                 </div>
                 <div class="flex w-full flex-col gap-2 text-center">
-                  <h1 class="font-semibold">Output</h1>
+                  <h3 class="font-semibold">Output</h3>
                   <GoodAmount :goods="outputGoods(item.selection.buildingType)" :multiplier="item.selection.amount"></GoodAmount>
                 </div>
                 <div class="flex w-full flex-col gap-2 text-center">
-                  <h1 class="font-semibold">Input</h1>
+                  <h3 class="font-semibold">Input</h3>
                   <GoodAmount :goods="inputGoods(item.selection.buildingType)" :multiplier="item.selection.amount"></GoodAmount>
                 </div>
               </div>
             </TransitionGroup>
           </div>
+          <div class="divider"></div>
           <div class="flex w-full flex-col justify-center gap-2 text-start">
-            <h1 class="font-semibold">Calculated buildings counts</h1>
+            <h3 class="font-semibold">Calculated buildings counts</h3>
             <BuildingsAmount></BuildingsAmount>
           </div>
         </div>
@@ -78,10 +83,21 @@ import { entries } from '@/utils';
 
 import { type BuildingSelectionMap, type CalculationResult, Calculator } from './calculator';
 import BuildingsAmount from './components/buildings-amount.vue';
-import { MULTIPLE_PRODUCER_PREFERENCE_LOCAL_STORAGE_KEY, PRODUCTION_METHOD_LOCAL_STORAGE_KEY } from './production-preferences';
+import {
+  generateBuildingInputOutputMap,
+  generateMultipleProducerPreferenceMap,
+  generatePreferenceMap,
+  MULTIPLE_PRODUCER_PREFERENCE_LOCAL_STORAGE_KEY,
+  PRODUCTION_METHOD_LOCAL_STORAGE_KEY,
+} from './production-preferences';
 import { store } from './store';
 import type { ProductionBuildingType } from './v3-data';
 import v3Data from './v3-data';
+
+// initialize store
+store.setProductionPreferences(generatePreferenceMap());
+store.setMultipleProducerPreferences(generateMultipleProducerPreferenceMap());
+store.setBuildingInputOutputMap(generateBuildingInputOutputMap(store.productionPreferences));
 
 const cachedSelections = localStorage.getItem('selections');
 const selections = reactive<{ selection: { buildingType: ProductionBuildingType; amount: number } }[]>(
@@ -144,6 +160,10 @@ function inputGoods(buildingType: ProductionBuildingType) {
 watch(store.productionPreferences, () => {
   // cache production preferences
   localStorage.setItem(PRODUCTION_METHOD_LOCAL_STORAGE_KEY, JSON.stringify(store.productionPreferences));
+
+  // calculate buildingInputOutputMap
+  store.setBuildingInputOutputMap(generateBuildingInputOutputMap(store.productionPreferences));
+
   calculate();
 });
 watch(store.multipleProducerPreferences, () => {
@@ -194,7 +214,7 @@ watch(selections, () => {
 onMounted(() => calculate()); // initial calculation
 </script>
 <style scoped>
-.container .pm-container {
+.pm-container {
   height: calc(100vh - 5rem);
 }
 .header {

@@ -6,8 +6,8 @@
           <Icon class="h-6 w-6" icon="ic:baseline-remove-circle" />
         </span>
       </span>
-      <BuildingIcon :building="v3Data.buildings[props.modelValue.buildingType]" :size="40" />
-      <select class="select-bordered select bg-amber-50" :value="props.modelValue.buildingType" @input="buildingChanged">
+      <BuildingIcon :building="v3Data.buildings[props.modelValue.buildingType]" :size="40" disableTooltip />
+      <select class="select-bordered select bg-amber-50 bg-opacity-50" :value="props.modelValue.buildingType" @input="buildingChanged">
         <optgroup label="Urban">
           <option v-for="[buildingType, building] of urbanBuildings" :key="buildingType" :value="buildingType">
             {{ building.humanizedName }}
@@ -30,7 +30,7 @@
           min="1"
           max="5000"
           placeholder="Type here"
-          class="input-bordered input w-28 bg-amber-50"
+          class="input-bordered input w-28 bg-amber-50 bg-opacity-50"
           :value="props.modelValue.amount"
           v-on:input="enforceMinMax($event.target as HTMLInputElement)"
           v-on:keyup="enforceMinMax($event.target as HTMLInputElement)"

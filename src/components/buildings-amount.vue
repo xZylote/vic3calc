@@ -1,9 +1,9 @@
 <template>
   <div class="flex w-full flex-row flex-wrap items-center gap-2">
     <div class="flex flex-row items-center gap-1" v-for="[buildingType, producer] in resultsSorted" :key="buildingType">
-      <BuildingIcon :building="v3Data.buildings[buildingType]" :size="32" />
+      <BuildingIcon :building="v3Data.buildings[buildingType]" :size="40" show-input-output />
       <div class="flex w-20 justify-start">
-        <div class="kbd flex flex-row whitespace-nowrap bg-amber-50">x {{ formatBuildingAmount(producer) }}</div>
+        <div class="kbd flex flex-row whitespace-nowrap bg-amber-50 bg-opacity-50">x {{ formatBuildingAmount(producer) }}</div>
       </div>
     </div>
   </div>

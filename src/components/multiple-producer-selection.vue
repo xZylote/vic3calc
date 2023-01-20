@@ -21,6 +21,7 @@
                 }
               "
               :active="buildingType === multipleProducer.preferredProducer"
+              show-input-output
             />
           </div>
         </TransitionGroup>
