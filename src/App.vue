@@ -48,7 +48,7 @@
         </div>
       </div>
     </div>
-    <div class="text-no-wrap my-footer flex h-32 w-full flex-col justify-center gap-2 p-4 text-white">
+    <div class="text-no-wrap my-footer flex h-20 w-full flex-col justify-center gap-2 p-4 text-white">
       <div class="w-full text-center">
         Disclaimer: all images displayed on this page are copyrighted by <a href="https://www.paradoxinteractive.com/" class="text-amber-800 hover:text-amber-500">Paradox Interactive</a>
       </div>

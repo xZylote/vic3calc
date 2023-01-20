@@ -38,7 +38,7 @@ export type MultipleProducerPreference = {
   };
 };
 
-const GOOD_REQUIREMENT_ROUNDS = 10;
+const GOOD_REQUIREMENT_ROUNDS = 5;
 
 export class Calculator {
   private static findProducerBuilding(good: Good): ProductionBuildingType {
