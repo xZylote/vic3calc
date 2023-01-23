@@ -232,9 +232,9 @@ export class Calculator {
       requesterBuildingCount: singleSelectedBuilding.amount,
     });
     // add the selection buildings to the result
-    if (supplyChain[singleSelectedBuilding.buildingType]) {
+    /*if (supplyChain[singleSelectedBuilding.buildingType]) {
       supplyChain[singleSelectedBuilding.buildingType]!.totalBuildingsNeeded = (supplyChain[singleSelectedBuilding.buildingType]!.totalBuildingsNeeded ?? 0) + (singleSelectedBuilding.amount ?? 0);
-    }
+    }*/
     return supplyChain;
   }
 

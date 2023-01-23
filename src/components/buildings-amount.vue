@@ -20,7 +20,8 @@ const resultsSorted = computed(() => {
   const all = entries(store.calculation.result);
   // sort by totalBuildingsNeeded, descending
   all.sort(([, { totalBuildingsNeeded: neededA }], [, { totalBuildingsNeeded: neededB }]) => ((neededA ?? 0) > (neededB ?? 0) ? -1 : 1));
-  return all;
+  // filter out buildings with 0 totalBuildingsNeeded
+  return all.filter(([, { totalBuildingsNeeded }]) => totalBuildingsNeeded > 0);
 });
 function formatBuildingAmount(producer: ProductionBuildingData) {
   return producer.totalBuildingsNeeded.toFixed(2);

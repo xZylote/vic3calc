@@ -47,7 +47,7 @@
           </div>
           <div class="divider"></div>
           <div class="flex w-full flex-col justify-center gap-2 text-start">
-            <h3 class="font-semibold">Calculated buildings counts</h3>
+            <h3 class="font-semibold">Required building counts</h3>
             <BuildingsAmount></BuildingsAmount>
           </div>
         </div>

@@ -1,6 +1,7 @@
 <template>
   <div class="flex w-full flex-col gap-2">
-    <div v-for="[buildingType, building] in buildingListInOrder" :key="buildingType" class="flex flex-row gap-2">
+    <input type="text" placeholder="type building name to filter" class="input w-full max-w-xs bg-amber-50 py-0" v-model="nameFilter" />
+    <div v-for="[buildingType, building] in buildingListInOrder" :key="buildingType" class="flex flex-row gap-2" v-show="shown[buildingType]">
       <div class="flex w-2/5 flex-col items-center gap-2 text-sm">
         <div class="flex w-full flex-row gap-2">
           <BuildingIcon :building="building" :size="40" :active="!!store.calculation.result[buildingType]" disableTooltip />
@@ -65,7 +66,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 import BuildingIcon from '@/components/building-icon.vue';
 import GoodIcon from '@/components/good-icon.vue';
@@ -73,6 +74,16 @@ import MethodIcon from '@/components/method-icon.vue';
 import { store } from '@/store';
 import { entries } from '@/utils';
 import v3Data, { type ProductionBuildingType } from '@/v3-data';
+
+const nameFilter = ref('');
+
+const shown = computed(() => {
+  const filterWord = nameFilter.value.toLowerCase();
+  return buildingListInOrder.value.reduce((acc, [buildingType, building]) => {
+    acc[buildingType] = filterWord.length === 0 || building.humanizedName.toLowerCase().includes(filterWord);
+    return acc;
+  }, {} as Record<ProductionBuildingType, boolean>);
+});
 
 const buildingListInOrder = computed(() => {
   const all = entries(v3Data.buildings);
